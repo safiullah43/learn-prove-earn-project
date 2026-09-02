@@ -1,0 +1,2 @@
+:HL["/learn-prove-earn-project/_next/static/css/e34dc1e42ae71ea5.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"_not-found","param":null,"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}},"staleTime":300,"buildId":"yUjo3HoDIeSVPD2bpdZVx"}
