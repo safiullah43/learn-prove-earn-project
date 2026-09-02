@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 type IconName =
     | "home"
     | "user"
@@ -136,24 +138,28 @@ function Icon({
     return <svg {...common}>{paths[name]}</svg>;
 }
 
+/* NAVIGATION ITEM - UPDATED WITH HREF SUPPORT */
 function NavItem({
     icon,
     label,
     active,
     badge,
+    href,
 }: {
     icon: IconName;
     label: string;
     active?: boolean;
     badge?: string;
+    href?: string;
 }) {
-    return (
-        <button
-            className={`group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition ${active
-                    ? "border border-purple-500/40 bg-gradient-to-r from-purple-500/20 to-transparent text-white shadow-[0_0_25px_rgba(124,58,237,.12)]"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
-                }`}
-        >
+    const className = `group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition ${
+        active
+            ? "border border-purple-500/40 bg-gradient-to-r from-purple-500/20 to-transparent text-white shadow-[0_0_25px_rgba(124,58,237,.12)]"
+            : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+    }`;
+
+    const content = (
+        <>
             <span className="flex items-center gap-3">
                 <span
                     className={
@@ -164,6 +170,7 @@ function NavItem({
                 >
                     <Icon name={icon} size={20} />
                 </span>
+
                 <span className="text-sm font-medium">{label}</span>
             </span>
 
@@ -172,8 +179,18 @@ function NavItem({
                     {badge}
                 </span>
             )}
-        </button>
+        </>
     );
+
+    if (href) {
+        return (
+            <Link href={href} className={className}>
+                {content}
+            </Link>
+        );
+    }
+
+    return <button className={className}>{content}</button>;
 }
 
 function Avatar({
@@ -251,10 +268,12 @@ export default function Home() {
                         <span className="text-slate-500">
                             <Icon name="search" size={18} />
                         </span>
+
                         <input
                             className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                             placeholder="Search jobs, people, skills, opportunities..."
                         />
+
                         <kbd className="rounded bg-white/[0.06] px-2 py-1 text-[10px] text-slate-500">
                             Ctrl + K
                         </kbd>
@@ -270,10 +289,11 @@ export default function Home() {
                         ].map(([icon, label], index) => (
                             <button
                                 key={label}
-                                className={`relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs transition ${index === 0
+                                className={`relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs transition ${
+                                    index === 0
                                         ? "bg-purple-500/10 text-purple-300"
                                         : "text-slate-400 hover:text-white"
-                                    }`}
+                                }`}
                             >
                                 <Icon name={icon as IconName} size={20} />
                                 <span>{label}</span>
@@ -294,16 +314,20 @@ export default function Home() {
 
                     <div className="flex items-center gap-2">
                         <Avatar initials="S" size="sm" />
-                        <span className="hidden text-sm font-semibold lg:block">Safiullah</span>
+                        <span className="hidden text-sm font-semibold lg:block">
+                            Safiullah
+                        </span>
                     </div>
                 </div>
             </header>
 
             <div className="relative mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-5 py-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+
                 {/* LEFT SIDEBAR */}
                 <aside className="hidden xl:block">
                     <div className="sticky top-24 space-y-5">
                         <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
+
                             <div className="h-20 bg-[linear-gradient(135deg,rgba(124,58,237,.35),rgba(14,165,233,.12),rgba(6,9,19,.2))]" />
 
                             <div className="-mt-10 px-5 pb-5">
@@ -330,8 +354,12 @@ export default function Home() {
 
                                 <div className="mt-5 rounded-xl border border-white/[0.07] bg-black/20 p-3">
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-slate-400">Profile Strength</span>
-                                        <span className="font-semibold text-cyan-300">82%</span>
+                                        <span className="text-slate-400">
+                                            Profile Strength
+                                        </span>
+                                        <span className="font-semibold text-cyan-300">
+                                            82%
+                                        </span>
                                     </div>
 
                                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
@@ -340,24 +368,63 @@ export default function Home() {
                                 </div>
                             </div>
 
+                            {/* SIDEBAR MENU */}
                             <div className="border-t border-white/[0.06] p-3">
-                                <NavItem icon="home" label="Home Feed" active />
-                                <NavItem icon="user" label="My Profile" />
-                                <NavItem icon="network" label="Network" />
-                                <NavItem icon="project" label="Projects" />
+                                <NavItem
+                                    icon="home"
+                                    label="Home Feed"
+                                    active
+                                />
 
-                                {/* SEPARATE COURSES BUTTON */}
-                                <NavItem icon="courses" label="Courses" badge="NEW" />
+                                <NavItem
+                                    icon="user"
+                                    label="My Profile"
+                                />
 
-                                <NavItem icon="bookmark" label="Saved" />
-                                <NavItem icon="briefcase" label="My Applications" />
-                                <NavItem icon="message" label="Messages" />
-                                <NavItem icon="settings" label="Settings" />
+                                <NavItem
+                                    icon="network"
+                                    label="Network"
+                                />
+
+                                <NavItem
+                                    icon="project"
+                                    label="Projects"
+                                />
+
+                                {/* COURSES BUTTON - NOW CONNECTED */}
+                                <NavItem
+                                    icon="courses"
+                                    label="Courses"
+                                    badge="NEW"
+                                    href="/courses"
+                                />
+
+                                <NavItem
+                                    icon="bookmark"
+                                    label="Saved"
+                                />
+
+                                <NavItem
+                                    icon="briefcase"
+                                    label="My Applications"
+                                />
+
+                                <NavItem
+                                    icon="message"
+                                    label="Messages"
+                                />
+
+                                <NavItem
+                                    icon="settings"
+                                    label="Settings"
+                                />
                             </div>
                         </section>
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
-                            <h3 className="font-semibold">Your Career Journey 🚀</h3>
+                            <h3 className="font-semibold">
+                                Your Career Journey 🚀
+                            </h3>
 
                             <div className="mt-5 grid grid-cols-3 gap-2 text-center">
                                 {[
@@ -367,16 +434,20 @@ export default function Home() {
                                 ].map(([value, label, color]) => (
                                     <div key={label}>
                                         <div
-                                            className={`mx-auto grid h-14 w-14 place-items-center rounded-full border text-xs font-bold ${color === "cyan"
+                                            className={`mx-auto grid h-14 w-14 place-items-center rounded-full border text-xs font-bold ${
+                                                color === "cyan"
                                                     ? "border-cyan-400/50 text-cyan-300"
                                                     : color === "purple"
                                                         ? "border-purple-400/50 text-purple-300"
                                                         : "border-orange-400/50 text-orange-300"
-                                                }`}
+                                            }`}
                                         >
                                             {value}
                                         </div>
-                                        <div className="mt-2 text-[10px] text-slate-500">{label}</div>
+
+                                        <div className="mt-2 text-[10px] text-slate-500">
+                                            {label}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -384,7 +455,10 @@ export default function Home() {
 
                         <section className="rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.08] to-purple-500/[0.06] p-5">
                             <div className="text-xl">👑</div>
-                            <h3 className="mt-3 font-semibold">Upgrade to LPE Pro</h3>
+
+                            <h3 className="mt-3 font-semibold">
+                                Upgrade to LPE Pro
+                            </h3>
 
                             <div className="mt-4 space-y-2 text-xs text-slate-400">
                                 <p>✓ Premium Opportunities</p>
@@ -401,7 +475,7 @@ export default function Home() {
 
                 {/* MAIN FEED */}
                 <section className="min-w-0 space-y-5">
-                    {/* CREATE POST */}
+
                     <div className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5 shadow-2xl shadow-black/20">
                         <div className="flex gap-3">
                             <Avatar initials="S" size="md" />
@@ -424,7 +498,10 @@ export default function Home() {
                                     className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-4 py-2.5 text-xs text-slate-300 transition hover:border-purple-500/40 hover:bg-purple-500/10"
                                 >
                                     <span className={color}>
-                                        <Icon name={icon as IconName} size={16} />
+                                        <Icon
+                                            name={icon as IconName}
+                                            size={16}
+                                        />
                                     </span>
                                     {label}
                                 </button>
@@ -448,19 +525,24 @@ export default function Home() {
 
                     {/* FEED FILTER */}
                     <div className="flex flex-wrap items-center gap-2">
-                        {["For You", "Opportunities", "Projects", "Discussions", "Success Stories"].map(
-                            (item, index) => (
-                                <button
-                                    key={item}
-                                    className={`rounded-full px-5 py-2.5 text-sm transition ${index === 0
-                                            ? "border border-purple-500/50 bg-purple-500/15 text-purple-300"
-                                            : "border border-white/[0.07] bg-white/[0.025] text-slate-400 hover:text-white"
-                                        }`}
-                                >
-                                    {item}
-                                </button>
-                            ),
-                        )}
+                        {[
+                            "For You",
+                            "Opportunities",
+                            "Projects",
+                            "Discussions",
+                            "Success Stories",
+                        ].map((item, index) => (
+                            <button
+                                key={item}
+                                className={`rounded-full px-5 py-2.5 text-sm transition ${
+                                    index === 0
+                                        ? "border border-purple-500/50 bg-purple-500/15 text-purple-300"
+                                        : "border border-white/[0.07] bg-white/[0.025] text-slate-400 hover:text-white"
+                                }`}
+                            >
+                                {item}
+                            </button>
+                        ))}
                     </div>
 
                     {/* JOB POST */}
@@ -474,10 +556,17 @@ export default function Home() {
 
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold">TechNova Solutions</h3>
-                                            <span className="text-cyan-400">✓</span>
-                                            <span className="text-xs text-emerald-400">• Hiring</span>
+                                            <h3 className="font-semibold">
+                                                TechNova Solutions
+                                            </h3>
+                                            <span className="text-cyan-400">
+                                                ✓
+                                            </span>
+                                            <span className="text-xs text-emerald-400">
+                                                • Hiring
+                                            </span>
                                         </div>
+
                                         <p className="mt-1 text-xs text-slate-500">
                                             2 hours ago • Remote
                                         </p>
@@ -493,35 +582,42 @@ export default function Home() {
                                 <div>
                                     <h2 className="text-xl font-bold">
                                         🚀 We&apos;re Hiring{" "}
-                                        <span className="text-blue-400">Frontend Developer</span>
+                                        <span className="text-blue-400">
+                                            Frontend Developer
+                                        </span>
                                     </h2>
 
                                     <p className="mt-3 text-sm leading-7 text-slate-400">
-                                        We&apos;re looking for a passionate Frontend Developer to join
-                                        our remote team and build modern web applications for global
-                                        clients.
+                                        We&apos;re looking for a passionate Frontend
+                                        Developer to join our remote team and build
+                                        modern web applications for global clients.
                                     </p>
 
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        {["React", "Next.js", "TypeScript", "Tailwind CSS"].map(
-                                            (skill) => (
-                                                <span
-                                                    key={skill}
-                                                    className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-1.5 text-xs text-cyan-200"
-                                                >
-                                                    {skill}
-                                                </span>
-                                            ),
-                                        )}
+                                        {[
+                                            "React",
+                                            "Next.js",
+                                            "TypeScript",
+                                            "Tailwind CSS",
+                                        ].map((skill) => (
+                                            <span
+                                                key={skill}
+                                                className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-1.5 text-xs text-cyan-200"
+                                            >
+                                                {skill}
+                                            </span>
+                                        ))}
                                     </div>
 
                                     <div className="mt-5 flex flex-wrap gap-3 text-xs">
                                         <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-300">
                                             💰 $2,500 – $4,000 / month
                                         </span>
+
                                         <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
                                             📍 Remote Worldwide
                                         </span>
+
                                         <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
                                             💼 Full-time
                                         </span>
@@ -532,6 +628,7 @@ export default function Home() {
                                     <div className="flex h-32 items-center justify-center rounded-lg border border-purple-400/20 bg-black/30">
                                         <div className="text-center">
                                             <div className="text-4xl">⌘</div>
+
                                             <p className="mt-2 text-xs text-purple-200">
                                                 Remote Development
                                             </p>
@@ -545,7 +642,9 @@ export default function Home() {
                             </div>
 
                             <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <span className="text-pink-400">♥ 432</span>
+                                <span className="text-pink-400">
+                                    ♥ 432
+                                </span>
                                 <span>▢ 68 Comments</span>
                                 <span>🔖 124 Saves</span>
                             </div>
@@ -564,13 +663,23 @@ export default function Home() {
                         <div className="p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex gap-3">
-                                    <Avatar initials="A" color="purple" size="md" />
+                                    <Avatar
+                                        initials="A"
+                                        color="purple"
+                                        size="md"
+                                    />
+
                                     <div>
                                         <h3 className="font-semibold">
                                             Ayesha | UI/UX Designer{" "}
-                                            <span className="text-blue-400">✓</span>
+                                            <span className="text-blue-400">
+                                                ✓
+                                            </span>
                                         </h3>
-                                        <p className="mt-1 text-xs text-slate-500">3 hours ago</p>
+
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            3 hours ago
+                                        </p>
                                     </div>
                                 </div>
 
@@ -578,6 +687,7 @@ export default function Home() {
                                     <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
                                         ✦ Project Showcase
                                     </span>
+
                                     <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
                                         ⭐ Featured
                                     </span>
@@ -585,12 +695,18 @@ export default function Home() {
                             </div>
 
                             <p className="mt-5 text-sm text-slate-300">
-                                Excited to share my latest project! 🎉 Just completed a modern
-                                SaaS dashboard design for a UK-based client.
+                                Excited to share my latest project! 🎉 Just
+                                completed a modern SaaS dashboard design for a
+                                UK-based client.
                             </p>
 
                             <div className="mt-4 flex flex-wrap gap-2">
-                                {["UI/UX", "Figma", "Product Design", "SaaS"].map((item) => (
+                                {[
+                                    "UI/UX",
+                                    "Figma",
+                                    "Product Design",
+                                    "SaaS",
+                                ].map((item) => (
                                     <span
                                         key={item}
                                         className="rounded-full bg-purple-500/10 px-3 py-1.5 text-xs text-purple-300"
@@ -609,7 +725,10 @@ export default function Home() {
 
                                 <div className="flex items-center justify-between p-4">
                                     <div>
-                                        <h4 className="font-semibold">SaaS Dashboard Design</h4>
+                                        <h4 className="font-semibold">
+                                            SaaS Dashboard Design
+                                        </h4>
+
                                         <p className="mt-1 text-xs text-slate-500">
                                             Complete UI/UX case study
                                         </p>
@@ -622,7 +741,9 @@ export default function Home() {
                             </div>
 
                             <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <span className="text-pink-400">♥ 298</span>
+                                <span className="text-pink-400">
+                                    ♥ 298
+                                </span>
                                 <span>▢ 42 Comments</span>
                                 <span>↗ 63 Shares</span>
                             </div>
@@ -639,26 +760,40 @@ export default function Home() {
                     {/* FREELANCE POST */}
                     <article className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-6">
                         <div className="flex gap-3">
-                            <Avatar initials="H" color="orange" size="md" />
+                            <Avatar
+                                initials="H"
+                                color="orange"
+                                size="md"
+                            />
 
                             <div className="min-w-0 flex-1">
                                 <h3 className="font-semibold">
                                     Hassan | Amazon VA{" "}
-                                    <span className="text-blue-400">✓</span>
+                                    <span className="text-blue-400">
+                                        ✓
+                                    </span>
                                 </h3>
-                                <p className="mt-1 text-xs text-slate-500">5 hours ago</p>
+
+                                <p className="mt-1 text-xs text-slate-500">
+                                    5 hours ago
+                                </p>
 
                                 <h2 className="mt-5 font-semibold">
                                     Looking for an Amazon FBA Virtual Assistant
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                                    Need an experienced Amazon VA for product research, listing
-                                    optimization and long-term support.
+                                    Need an experienced Amazon VA for product
+                                    research, listing optimization and long-term
+                                    support.
                                 </p>
 
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    {["Amazon FBA", "Product Research", "PPC"].map((item) => (
+                                    {[
+                                        "Amazon FBA",
+                                        "Product Research",
+                                        "PPC",
+                                    ].map((item) => (
                                         <span
                                             key={item}
                                             className="rounded-lg bg-orange-500/[0.08] px-3 py-1.5 text-xs text-orange-300"
@@ -673,6 +808,7 @@ export default function Home() {
                                         <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-300">
                                             💰 $400 – $800 / month
                                         </span>
+
                                         <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
                                             📍 Remote
                                         </span>
@@ -690,10 +826,16 @@ export default function Home() {
                 {/* RIGHT SIDEBAR */}
                 <aside className="hidden xl:block">
                     <div className="sticky top-24 space-y-5">
+
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">🔥 Trending Opportunities</h3>
-                                <button className="text-xs text-cyan-300">See All →</button>
+                                <h3 className="font-semibold">
+                                    🔥 Trending Opportunities
+                                </h3>
+
+                                <button className="text-xs text-cyan-300">
+                                    See All →
+                                </button>
                             </div>
 
                             <div className="mt-5 space-y-3">
@@ -710,18 +852,25 @@ export default function Home() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className={`grid h-10 w-10 place-items-center rounded-lg ${color === "green"
+                                                className={`grid h-10 w-10 place-items-center rounded-lg ${
+                                                    color === "green"
                                                         ? "bg-emerald-500/15 text-emerald-300"
                                                         : color === "purple"
                                                             ? "bg-purple-500/15 text-purple-300"
                                                             : "bg-blue-500/15 text-blue-300"
-                                                    }`}
+                                                }`}
                                             >
-                                                <Icon name="briefcase" size={18} />
+                                                <Icon
+                                                    name="briefcase"
+                                                    size={18}
+                                                />
                                             </div>
 
                                             <div>
-                                                <p className="text-xs font-medium">{title}</p>
+                                                <p className="text-xs font-medium">
+                                                    {title}
+                                                </p>
+
                                                 <p className="mt-1 text-[10px] text-slate-500">
                                                     Remote
                                                 </p>
@@ -738,8 +887,13 @@ export default function Home() {
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">People You May Connect With</h3>
-                                <button className="text-xs text-cyan-300">See All →</button>
+                                <h3 className="font-semibold">
+                                    People You May Connect With
+                                </h3>
+
+                                <button className="text-xs text-cyan-300">
+                                    See All →
+                                </button>
                             </div>
 
                             <div className="mt-5 space-y-4">
@@ -749,15 +903,25 @@ export default function Home() {
                                     ["Bilal Ahmad", "Amazon Expert USA", "B"],
                                     ["Hira Malik", "Digital Marketer", "H"],
                                 ].map(([name, role, initial]) => (
-                                    <div key={name} className="flex items-center gap-3">
+                                    <div
+                                        key={name}
+                                        className="flex items-center gap-3"
+                                    >
                                         <Avatar
                                             initials={initial}
                                             size="sm"
-                                            color={initial === "S" ? "purple" : "blue"}
+                                            color={
+                                                initial === "S"
+                                                    ? "purple"
+                                                    : "blue"
+                                            }
                                         />
 
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-xs font-semibold">{name}</p>
+                                            <p className="truncate text-xs font-semibold">
+                                                {name}
+                                            </p>
+
                                             <p className="truncate text-[10px] text-slate-500">
                                                 {role}
                                             </p>
@@ -773,8 +937,13 @@ export default function Home() {
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">Recommended Skills</h3>
-                                <button className="text-xs text-cyan-300">See All →</button>
+                                <h3 className="font-semibold">
+                                    Recommended Skills
+                                </h3>
+
+                                <button className="text-xs text-cyan-300">
+                                    See All →
+                                </button>
                             </div>
 
                             <div className="mt-5 space-y-3">
@@ -793,7 +962,10 @@ export default function Home() {
                                         </div>
 
                                         <div>
-                                            <p className="text-xs font-medium">{skill}</p>
+                                            <p className="text-xs font-medium">
+                                                {skill}
+                                            </p>
+
                                             <p className="mt-1 text-[10px] text-slate-500">
                                                 {learners}
                                             </p>
@@ -805,7 +977,10 @@ export default function Home() {
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">Platform Activity</h3>
+                                <h3 className="font-semibold">
+                                    Platform Activity
+                                </h3>
+
                                 <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300">
                                     ● LIVE
                                 </span>
@@ -822,8 +997,13 @@ export default function Home() {
                                         key={label}
                                         className="rounded-xl border border-white/[0.06] bg-black/20 p-3"
                                     >
-                                        <p className="font-bold text-purple-200">{number}</p>
-                                        <p className="mt-1 text-[10px] text-slate-500">{label}</p>
+                                        <p className="font-bold text-purple-200">
+                                            {number}
+                                        </p>
+
+                                        <p className="mt-1 text-[10px] text-slate-500">
+                                            {label}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
