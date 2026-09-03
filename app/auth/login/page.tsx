@@ -1,11 +1,19 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -14,7 +22,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
 
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [checkingSession, setCheckingSession] =
+    useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -24,9 +33,13 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        const redirectTo = searchParams.get("redirect");
+        const redirectTo =
+          searchParams.get("redirect");
 
-        if (redirectTo && redirectTo.startsWith("/")) {
+        if (
+          redirectTo &&
+          redirectTo.startsWith("/")
+        ) {
           router.replace(redirectTo);
         } else {
           router.replace("/dashboard");
@@ -41,7 +54,9 @@ export default function LoginPage() {
     checkSession();
   }, [router, searchParams]);
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setError("");
@@ -75,13 +90,19 @@ export default function LoginPage() {
     }
 
     if (!data.session) {
-      setError("Login could not be completed. Please try again.");
+      setError(
+        "Login could not be completed. Please try again."
+      );
       return;
     }
 
-    const redirectTo = searchParams.get("redirect");
+    const redirectTo =
+      searchParams.get("redirect");
 
-    if (redirectTo && redirectTo.startsWith("/")) {
+    if (
+      redirectTo &&
+      redirectTo.startsWith("/")
+    ) {
       router.replace(redirectTo);
     } else {
       router.replace("/dashboard");
@@ -286,5 +307,27 @@ export default function LoginPage() {
 
       </div>
     </main>
+  );
+}
+
+function LoginLoading() {
+  return (
+    <main className="min-h-screen bg-[#060913] text-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-yellow-400" />
+
+        <p className="mt-4 text-sm text-white/40">
+          Loading login...
+        </p>
+      </div>
+    </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginForm />
+    </Suspense>
   );
 }
