@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EnrollmentButton from "./EnrollmentButton";
 
 const courses = {
   "1": {
@@ -134,9 +135,6 @@ const courses = {
   },
 };
 
-// IMPORTANT:
-// output: "export" ke sath dynamic routes ke liye
-// ye IDs build time par generate hongi.
 export function generateStaticParams() {
   return [
     { id: "1" },
@@ -231,10 +229,10 @@ export default async function CourseDetail({ params }: PageProps) {
           </nav>
 
           <Link
-            href="/"
+            href="/dashboard"
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10 transition"
           >
-            My Profile
+            My Dashboard
           </Link>
 
         </div>
@@ -391,12 +389,8 @@ export default async function CourseDetail({ params }: PageProps) {
                 Full access to all lessons and future updates.
               </p>
 
-              <Link
-                href="/courses"
-                className="mt-6 block w-full rounded-2xl bg-yellow-400 px-5 py-4 text-center font-black text-black transition hover:bg-yellow-300 hover:scale-[1.01]"
-              >
-                Enroll Now →
-              </Link>
+              {/* REAL ENROLLMENT BUTTON */}
+              <EnrollmentButton courseId={id} />
 
               <div className="mt-6 space-y-3 text-sm text-white/60">
 

@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 type IconName =
     | "home"
@@ -39,7 +43,7 @@ function Icon({
         strokeLinejoin: "round" as const,
     };
 
-    const paths: Record<IconName, React.ReactNode> = {
+    const paths: Record<IconName, ReactNode> = {
         home: (
             <>
                 <path d="M3 10.5 12 3l9 7.5" />
@@ -138,19 +142,20 @@ function Icon({
     return <svg {...common}>{paths[name]}</svg>;
 }
 
-/* NAVIGATION ITEM - UPDATED WITH HREF SUPPORT */
 function NavItem({
     icon,
     label,
     active,
     badge,
     href,
+    onClick,
 }: {
     icon: IconName;
     label: string;
     active?: boolean;
     badge?: string;
     href?: string;
+    onClick?: () => void;
 }) {
     const className = `group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition ${
         active
@@ -182,7 +187,7 @@ function NavItem({
         </>
     );
 
-    if (href) {
+    if (href && !onClick) {
         return (
             <Link href={href} className={className}>
                 {content}
@@ -190,7 +195,15 @@ function NavItem({
         );
     }
 
-    return <button className={className}>{content}</button>;
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={className}
+        >
+            {content}
+        </button>
+    );
 }
 
 function Avatar({
@@ -229,21 +242,88 @@ function Action({
     icon,
     label,
     count,
+    onClick,
 }: {
     icon: IconName;
     label: string;
     count?: string;
+    onClick?: () => void;
 }) {
     return (
-        <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/[0.05] hover:text-purple-300">
+        <button
+            type="button"
+            onClick={onClick}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/[0.05] hover:text-purple-300"
+        >
             <Icon name={icon} size={18} />
             <span>{label}</span>
-            {count && <span className="text-xs text-slate-600">{count}</span>}
+            {count && (
+                <span className="text-xs text-slate-600">
+                    {count}
+                </span>
+            )}
         </button>
     );
 }
 
 export default function Home() {
+    const router = useRouter();
+
+    const [session, setSession] = useState<Session | null>(null);
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function loadSession() {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
+            if (mounted) {
+                setSession(session);
+            }
+        }
+
+        loadSession();
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange(
+            (_event, newSession) => {
+                setSession(newSession);
+            }
+        );
+
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    function requireAuth() {
+        if (session) {
+            return true;
+        }
+
+        router.push("/auth/login");
+        return false;
+    }
+
+    function protectedAction() {
+        requireAuth();
+    }
+
+    async function handleLogout() {
+        await supabase.auth.signOut();
+        setSession(null);
+        router.push("/");
+    }
+
+    const userName =
+        session?.user?.user_metadata?.full_name ||
+        session?.user?.email?.split("@")[0] ||
+        "Safiullah";
+
     return (
         <main className="min-h-screen overflow-x-hidden bg-[#060913] text-white">
             <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(99,102,241,.18),transparent_35%),radial-gradient(circle_at_100%_30%,rgba(168,85,247,.09),transparent_25%)]" />
@@ -251,13 +331,19 @@ export default function Home() {
             {/* TOP NAVIGATION */}
             <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#080b15]/85 backdrop-blur-xl">
                 <div className="mx-auto flex h-[74px] max-w-[1600px] items-center gap-6 px-5">
+
                     <div className="flex min-w-[170px] items-center gap-3">
                         <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-[0_0_25px_rgba(124,58,237,.4)]">
-                            <span className="text-xl font-black">L</span>
+                            <span className="text-xl font-black">
+                                L
+                            </span>
                         </div>
 
                         <div>
-                            <div className="text-xl font-black tracking-tight">LPE</div>
+                            <div className="text-xl font-black tracking-tight">
+                                LPE
+                            </div>
+
                             <div className="text-[8px] font-semibold tracking-[0.18em] text-slate-500">
                                 LEARN · PROVE · EARN
                             </div>
@@ -270,6 +356,7 @@ export default function Home() {
                         </span>
 
                         <input
+                            onClick={protectedAction}
                             className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                             placeholder="Search jobs, people, skills, opportunities..."
                         />
@@ -280,22 +367,32 @@ export default function Home() {
                     </div>
 
                     <nav className="mx-auto hidden items-center gap-2 md:flex">
+
+                        <button
+                            type="button"
+                            className="relative flex flex-col items-center gap-1 rounded-xl bg-purple-500/10 px-4 py-2 text-xs text-purple-300"
+                        >
+                            <Icon name="home" size={20} />
+                            <span>Home</span>
+                        </button>
+
                         {[
-                            ["home", "Home"],
                             ["briefcase", "Opportunities"],
                             ["network", "Network"],
                             ["message", "Messages"],
                             ["bell", "Notifications"],
-                        ].map(([icon, label], index) => (
+                        ].map(([icon, label]) => (
                             <button
+                                type="button"
                                 key={label}
-                                className={`relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs transition ${
-                                    index === 0
-                                        ? "bg-purple-500/10 text-purple-300"
-                                        : "text-slate-400 hover:text-white"
-                                }`}
+                                onClick={protectedAction}
+                                className="relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs text-slate-400 transition hover:text-white"
                             >
-                                <Icon name={icon as IconName} size={20} />
+                                <Icon
+                                    name={icon as IconName}
+                                    size={20}
+                                />
+
                                 <span>{label}</span>
 
                                 {label === "Notifications" && (
@@ -307,15 +404,67 @@ export default function Home() {
                         ))}
                     </nav>
 
-                    <button className="ml-auto hidden items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02] sm:flex">
-                        <Icon name="plus" size={18} />
-                        Create Post
-                    </button>
+                    {!session ? (
+                        <div className="ml-auto hidden items-center gap-2 sm:flex">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.push("/auth/login")
+                                }
+                                className="rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/5 hover:text-white"
+                            >
+                                Login
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.push("/auth/signup")
+                                }
+                                className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02]"
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="ml-auto flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.push("/dashboard")
+                                }
+                                className="hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02] sm:flex"
+                            >
+                                Dashboard
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="hidden rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white sm:block"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-2">
-                        <Avatar initials="S" size="sm" />
+                        <button
+                            type="button"
+                            onClick={protectedAction}
+                        >
+                            <Avatar
+                                initials={
+                                    userName
+                                        .charAt(0)
+                                        .toUpperCase()
+                                }
+                                size="sm"
+                            />
+                        </button>
+
                         <span className="hidden text-sm font-semibold lg:block">
-                            Safiullah
+                            {userName}
                         </span>
                     </div>
                 </div>
@@ -326,17 +475,33 @@ export default function Home() {
                 {/* LEFT SIDEBAR */}
                 <aside className="hidden xl:block">
                     <div className="sticky top-24 space-y-5">
+
                         <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
 
                             <div className="h-20 bg-[linear-gradient(135deg,rgba(124,58,237,.35),rgba(14,165,233,.12),rgba(6,9,19,.2))]" />
 
                             <div className="-mt-10 px-5 pb-5">
-                                <Avatar initials="S" size="lg" />
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    <Avatar
+                                        initials={userName
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                        size="lg"
+                                    />
+                                </button>
 
                                 <div className="mt-3">
                                     <div className="flex items-center gap-2">
-                                        <h2 className="font-bold">Safiullah</h2>
-                                        <span className="text-blue-400">✓</span>
+                                        <h2 className="font-bold">
+                                            {userName}
+                                        </h2>
+
+                                        <span className="text-blue-400">
+                                            ✓
+                                        </span>
                                     </div>
 
                                     <p className="mt-1 text-xs leading-5 text-slate-400">
@@ -346,9 +511,13 @@ export default function Home() {
                                     </p>
 
                                     <div className="mt-3 flex gap-3 text-xs text-slate-500">
-                                        <span>1.2K Connections</span>
+                                        <span>
+                                            1.2K Connections
+                                        </span>
                                         <span>•</span>
-                                        <span>47 Posts</span>
+                                        <span>
+                                            47 Posts
+                                        </span>
                                     </div>
                                 </div>
 
@@ -357,6 +526,7 @@ export default function Home() {
                                         <span className="text-slate-400">
                                             Profile Strength
                                         </span>
+
                                         <span className="font-semibold text-cyan-300">
                                             82%
                                         </span>
@@ -370,6 +540,7 @@ export default function Home() {
 
                             {/* SIDEBAR MENU */}
                             <div className="border-t border-white/[0.06] p-3">
+
                                 <NavItem
                                     icon="home"
                                     label="Home Feed"
@@ -379,44 +550,54 @@ export default function Home() {
                                 <NavItem
                                     icon="user"
                                     label="My Profile"
+                                    onClick={protectedAction}
                                 />
 
                                 <NavItem
                                     icon="network"
                                     label="Network"
+                                    onClick={protectedAction}
                                 />
 
                                 <NavItem
                                     icon="project"
                                     label="Projects"
+                                    onClick={protectedAction}
                                 />
 
-                                {/* COURSES BUTTON - NOW CONNECTED */}
                                 <NavItem
                                     icon="courses"
                                     label="Courses"
                                     badge="NEW"
-                                    href="/courses"
+                                    onClick={() => {
+                                        if (requireAuth()) {
+                                            router.push("/courses");
+                                        }
+                                    }}
                                 />
 
                                 <NavItem
                                     icon="bookmark"
                                     label="Saved"
+                                    onClick={protectedAction}
                                 />
 
                                 <NavItem
                                     icon="briefcase"
                                     label="My Applications"
+                                    onClick={protectedAction}
                                 />
 
                                 <NavItem
                                     icon="message"
                                     label="Messages"
+                                    onClick={protectedAction}
                                 />
 
                                 <NavItem
                                     icon="settings"
                                     label="Settings"
+                                    onClick={protectedAction}
                                 />
                             </div>
                         </section>
@@ -431,25 +612,27 @@ export default function Home() {
                                     ["72%", "Skills", "cyan"],
                                     ["65%", "Network", "purple"],
                                     ["48%", "Earnings", "orange"],
-                                ].map(([value, label, color]) => (
-                                    <div key={label}>
-                                        <div
-                                            className={`mx-auto grid h-14 w-14 place-items-center rounded-full border text-xs font-bold ${
-                                                color === "cyan"
-                                                    ? "border-cyan-400/50 text-cyan-300"
-                                                    : color === "purple"
-                                                        ? "border-purple-400/50 text-purple-300"
-                                                        : "border-orange-400/50 text-orange-300"
-                                            }`}
-                                        >
-                                            {value}
-                                        </div>
+                                ].map(
+                                    ([value, label, color]) => (
+                                        <div key={label}>
+                                            <div
+                                                className={`mx-auto grid h-14 w-14 place-items-center rounded-full border text-xs font-bold ${
+                                                    color === "cyan"
+                                                        ? "border-cyan-400/50 text-cyan-300"
+                                                        : color === "purple"
+                                                          ? "border-purple-400/50 text-purple-300"
+                                                          : "border-orange-400/50 text-orange-300"
+                                                }`}
+                                            >
+                                                {value}
+                                            </div>
 
-                                        <div className="mt-2 text-[10px] text-slate-500">
-                                            {label}
+                                            <div className="mt-2 text-[10px] text-slate-500">
+                                                {label}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                )}
                             </div>
                         </section>
 
@@ -466,7 +649,11 @@ export default function Home() {
                                 <p>✓ Advanced Analytics</p>
                             </div>
 
-                            <button className="mt-5 w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 py-3 text-sm font-bold text-black">
+                            <button
+                                type="button"
+                                onClick={protectedAction}
+                                className="mt-5 w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 py-3 text-sm font-bold text-black"
+                            >
                                 Upgrade Now →
                             </button>
                         </section>
@@ -477,10 +664,23 @@ export default function Home() {
                 <section className="min-w-0 space-y-5">
 
                     <div className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5 shadow-2xl shadow-black/20">
+
                         <div className="flex gap-3">
-                            <Avatar initials="S" size="md" />
+                            <button
+                                type="button"
+                                onClick={protectedAction}
+                            >
+                                <Avatar
+                                    initials={userName
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                    size="md"
+                                />
+                            </button>
 
                             <input
+                                onClick={protectedAction}
+                                readOnly={!session}
                                 placeholder="What are you working on today?"
                                 className="h-14 flex-1 rounded-xl border border-white/[0.08] bg-[#090d17] px-5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-purple-500/50"
                             />
@@ -494,7 +694,9 @@ export default function Home() {
                                 ["plus", "Share Update", "text-blue-400"],
                             ].map(([icon, label, color]) => (
                                 <button
+                                    type="button"
                                     key={label}
+                                    onClick={protectedAction}
                                     className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-4 py-2.5 text-xs text-slate-300 transition hover:border-purple-500/40 hover:bg-purple-500/10"
                                 >
                                     <span className={color}>
@@ -509,15 +711,49 @@ export default function Home() {
                         </div>
 
                         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
+
                             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-                                <span>▣ Photo/Video</span>
-                                <span>▥ Poll</span>
-                                <span>◫ Document</span>
-                                <span>🔗 Link</span>
-                                <span>▣ Event</span>
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ▣ Photo/Video
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ▥ Poll
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ◫ Document
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    🔗 Link
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ▣ Event
+                                </button>
                             </div>
 
-                            <button className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-8 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.3)]">
+                            <button
+                                type="button"
+                                onClick={protectedAction}
+                                className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-8 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.3)]"
+                            >
                                 Post
                             </button>
                         </div>
@@ -533,7 +769,13 @@ export default function Home() {
                             "Success Stories",
                         ].map((item, index) => (
                             <button
+                                type="button"
                                 key={item}
+                                onClick={
+                                    index === 0
+                                        ? undefined
+                                        : protectedAction
+                                }
                                 className={`rounded-full px-5 py-2.5 text-sm transition ${
                                     index === 0
                                         ? "border border-purple-500/50 bg-purple-500/15 text-purple-300"
@@ -548,6 +790,7 @@ export default function Home() {
                     {/* JOB POST */}
                     <article className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
                         <div className="p-6">
+
                             <div className="flex items-start justify-between">
                                 <div className="flex gap-3">
                                     <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 font-bold">
@@ -559,9 +802,11 @@ export default function Home() {
                                             <h3 className="font-semibold">
                                                 TechNova Solutions
                                             </h3>
+
                                             <span className="text-cyan-400">
                                                 ✓
                                             </span>
+
                                             <span className="text-xs text-emerald-400">
                                                 • Hiring
                                             </span>
@@ -625,9 +870,12 @@ export default function Home() {
                                 </div>
 
                                 <div className="rounded-xl border border-purple-500/20 bg-[radial-gradient(circle_at_50%_20%,rgba(124,58,237,.6),transparent_45%),linear-gradient(135deg,#111a36,#070a13)] p-5">
+
                                     <div className="flex h-32 items-center justify-center rounded-lg border border-purple-400/20 bg-black/30">
                                         <div className="text-center">
-                                            <div className="text-4xl">⌘</div>
+                                            <div className="text-4xl">
+                                                ⌘
+                                            </div>
 
                                             <p className="mt-2 text-xs text-purple-200">
                                                 Remote Development
@@ -635,32 +883,72 @@ export default function Home() {
                                         </div>
                                     </div>
 
-                                    <button className="mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-500 py-3 text-sm font-semibold">
+                                    <button
+                                        type="button"
+                                        onClick={protectedAction}
+                                        className="mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-500 py-3 text-sm font-semibold"
+                                    >
                                         Apply Now →
                                     </button>
                                 </div>
                             </div>
 
                             <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <span className="text-pink-400">
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                    className="text-pink-400"
+                                >
                                     ♥ 432
-                                </span>
-                                <span>▢ 68 Comments</span>
-                                <span>🔖 124 Saves</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ▢ 68 Comments
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    🔖 124 Saves
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap justify-between border-t border-white/[0.06] px-4 py-2">
-                            <Action icon="heart" label="Appreciate" />
-                            <Action icon="comment" label="Comment" />
-                            <Action icon="share" label="Share" />
-                            <Action icon="save" label="Save" />
+                            <Action
+                                icon="heart"
+                                label="Appreciate"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="comment"
+                                label="Comment"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="share"
+                                label="Share"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="save"
+                                label="Save"
+                                onClick={protectedAction}
+                            />
                         </div>
                     </article>
 
                     {/* PROJECT POST */}
                     <article className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
                         <div className="p-6">
+
                             <div className="flex items-center justify-between">
                                 <div className="flex gap-3">
                                     <Avatar
@@ -717,6 +1005,7 @@ export default function Home() {
                             </div>
 
                             <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08] bg-[#090d17]">
+
                                 <div className="grid h-44 grid-cols-3 gap-3 bg-[radial-gradient(circle_at_20%_20%,rgba(124,58,237,.5),transparent_30%),radial-gradient(circle_at_80%_70%,rgba(34,211,238,.35),transparent_25%)] p-4">
                                     <div className="rounded-lg border border-white/10 bg-white/[0.05]" />
                                     <div className="rounded-lg border border-white/10 bg-white/[0.08]" />
@@ -734,32 +1023,72 @@ export default function Home() {
                                         </p>
                                     </div>
 
-                                    <button className="rounded-lg bg-blue-600/80 px-4 py-2 text-xs font-semibold">
+                                    <button
+                                        type="button"
+                                        onClick={protectedAction}
+                                        className="rounded-lg bg-blue-600/80 px-4 py-2 text-xs font-semibold"
+                                    >
                                         View Full Project →
                                     </button>
                                 </div>
                             </div>
 
                             <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <span className="text-pink-400">
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                    className="text-pink-400"
+                                >
                                     ♥ 298
-                                </span>
-                                <span>▢ 42 Comments</span>
-                                <span>↗ 63 Shares</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ▢ 42 Comments
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                >
+                                    ↗ 63 Shares
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap justify-between border-t border-white/[0.06] px-4 py-2">
-                            <Action icon="heart" label="Appreciate" />
-                            <Action icon="comment" label="Comment" />
-                            <Action icon="project" label="Collaborate" />
-                            <Action icon="share" label="Share" />
+                            <Action
+                                icon="heart"
+                                label="Appreciate"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="comment"
+                                label="Comment"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="project"
+                                label="Collaborate"
+                                onClick={protectedAction}
+                            />
+
+                            <Action
+                                icon="share"
+                                label="Share"
+                                onClick={protectedAction}
+                            />
                         </div>
                     </article>
 
                     {/* FREELANCE POST */}
                     <article className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-6">
                         <div className="flex gap-3">
+
                             <Avatar
                                 initials="H"
                                 color="orange"
@@ -767,6 +1096,7 @@ export default function Home() {
                             />
 
                             <div className="min-w-0 flex-1">
+
                                 <h3 className="font-semibold">
                                     Hassan | Amazon VA{" "}
                                     <span className="text-blue-400">
@@ -804,6 +1134,7 @@ export default function Home() {
                                 </div>
 
                                 <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+
                                     <div className="flex flex-wrap gap-3 text-xs">
                                         <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-300">
                                             💰 $400 – $800 / month
@@ -814,7 +1145,11 @@ export default function Home() {
                                         </span>
                                     </div>
 
-                                    <button className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-bold text-black">
+                                    <button
+                                        type="button"
+                                        onClick={protectedAction}
+                                        className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-bold text-black"
+                                    >
                                         I&apos;m Interested
                                     </button>
                                 </div>
@@ -828,12 +1163,17 @@ export default function Home() {
                     <div className="sticky top-24 space-y-5">
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
+
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">
                                     🔥 Trending Opportunities
                                 </h3>
 
-                                <button className="text-xs text-cyan-300">
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                    className="text-xs text-cyan-300"
+                                >
                                     See All →
                                 </button>
                             </div>
@@ -846,18 +1186,21 @@ export default function Home() {
                                     ["Cybersecurity Analyst", "$4k–$7k", "blue"],
                                     ["Content Writer", "$600–$1k", "purple"],
                                 ].map(([title, salary, color]) => (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={title}
-                                        className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.025] p-3"
+                                        onClick={protectedAction}
+                                        className="flex w-full items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.025] p-3 text-left"
                                     >
                                         <div className="flex items-center gap-3">
+
                                             <div
                                                 className={`grid h-10 w-10 place-items-center rounded-lg ${
                                                     color === "green"
                                                         ? "bg-emerald-500/15 text-emerald-300"
                                                         : color === "purple"
-                                                            ? "bg-purple-500/15 text-purple-300"
-                                                            : "bg-blue-500/15 text-blue-300"
+                                                          ? "bg-purple-500/15 text-purple-300"
+                                                          : "bg-blue-500/15 text-blue-300"
                                                 }`}
                                             >
                                                 <Icon
@@ -880,18 +1223,23 @@ export default function Home() {
                                         <span className="text-[10px] font-semibold text-emerald-300">
                                             {salary}
                                         </span>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </section>
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
+
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">
                                     People You May Connect With
                                 </h3>
 
-                                <button className="text-xs text-cyan-300">
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                    className="text-xs text-cyan-300"
+                                >
                                     See All →
                                 </button>
                             </div>
@@ -907,15 +1255,20 @@ export default function Home() {
                                         key={name}
                                         className="flex items-center gap-3"
                                     >
-                                        <Avatar
-                                            initials={initial}
-                                            size="sm"
-                                            color={
-                                                initial === "S"
-                                                    ? "purple"
-                                                    : "blue"
-                                            }
-                                        />
+                                        <button
+                                            type="button"
+                                            onClick={protectedAction}
+                                        >
+                                            <Avatar
+                                                initials={initial}
+                                                size="sm"
+                                                color={
+                                                    initial === "S"
+                                                        ? "purple"
+                                                        : "blue"
+                                                }
+                                            />
+                                        </button>
 
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-xs font-semibold">
@@ -927,7 +1280,11 @@ export default function Home() {
                                             </p>
                                         </div>
 
-                                        <button className="rounded-lg border border-blue-500/30 px-3 py-2 text-xs text-blue-300 transition hover:bg-blue-500/10">
+                                        <button
+                                            type="button"
+                                            onClick={protectedAction}
+                                            className="rounded-lg border border-blue-500/30 px-3 py-2 text-xs text-blue-300 transition hover:bg-blue-500/10"
+                                        >
                                             Connect
                                         </button>
                                     </div>
@@ -936,12 +1293,17 @@ export default function Home() {
                         </section>
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
+
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">
                                     Recommended Skills
                                 </h3>
 
-                                <button className="text-xs text-cyan-300">
+                                <button
+                                    type="button"
+                                    onClick={protectedAction}
+                                    className="text-xs text-cyan-300"
+                                >
                                     See All →
                                 </button>
                             </div>
@@ -953,9 +1315,11 @@ export default function Home() {
                                     ["Digital Marketing", "22.1K learners"],
                                     ["Shopify", "9.6K learners"],
                                 ].map(([skill, learners]) => (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={skill}
-                                        className="flex items-center gap-3 rounded-xl bg-white/[0.025] p-3"
+                                        onClick={protectedAction}
+                                        className="flex w-full items-center gap-3 rounded-xl bg-white/[0.025] p-3 text-left"
                                     >
                                         <div className="grid h-10 w-10 place-items-center rounded-lg bg-purple-500/10 text-sm font-bold text-purple-300">
                                             {skill[0]}
@@ -970,12 +1334,13 @@ export default function Home() {
                                                 {learners}
                                             </p>
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </section>
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
+
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">
                                     Platform Activity
@@ -993,9 +1358,11 @@ export default function Home() {
                                     ["56", "Projects Shared"],
                                     ["12", "Success Stories"],
                                 ].map(([number, label]) => (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={label}
-                                        className="rounded-xl border border-white/[0.06] bg-black/20 p-3"
+                                        onClick={protectedAction}
+                                        className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-left"
                                     >
                                         <p className="font-bold text-purple-200">
                                             {number}
@@ -1004,10 +1371,11 @@ export default function Home() {
                                         <p className="mt-1 text-[10px] text-slate-500">
                                             {label}
                                         </p>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </section>
+
                     </div>
                 </aside>
             </div>
