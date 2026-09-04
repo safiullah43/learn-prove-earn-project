@@ -2,7 +2,16 @@ import Link from "next/link";
 import EnrollmentButton from "./EnrollmentButton";
 import { supabase } from "@/lib/supabase";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() {
+  return [
+    { id: "1" },
+    { id: "2" },
+    { id: "3" },
+    { id: "4" },
+    { id: "5" },
+    { id: "6" },
+  ];
+}
 
 const fallbackCourses: Record<string, any> = {
   "1": {
