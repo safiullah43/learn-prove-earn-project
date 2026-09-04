@@ -23,7 +23,9 @@ type IconName =
     | "comment"
     | "share"
     | "save"
-    | "arrow";
+    | "arrow"
+    | "menu"
+    | "close";
 
 function Icon({
     name,
@@ -137,6 +139,19 @@ function Icon({
                 <path d="m13 6 6 6-6 6" />
             </>
         ),
+        menu: (
+            <>
+                <path d="M4 6h16" />
+                <path d="M4 12h16" />
+                <path d="M4 18h16" />
+            </>
+        ),
+        close: (
+            <>
+                <path d="M18 6 6 18" />
+                <path d="M6 6l12 12" />
+            </>
+        ),
     };
 
     return <svg {...common}>{paths[name]}</svg>;
@@ -216,9 +231,9 @@ function Avatar({
     size?: "sm" | "md" | "lg";
 }) {
     const sizeClass = {
-        sm: "h-10 w-10 text-xs",
-        md: "h-12 w-12 text-sm",
-        lg: "h-24 w-24 text-2xl",
+        sm: "h-9 w-9 text-xs sm:h-10 sm:w-10",
+        md: "h-11 w-11 text-sm sm:h-12 sm:w-12",
+        lg: "h-20 w-20 text-xl sm:h-24 sm:w-24 sm:text-2xl",
     };
 
     const colors = {
@@ -253,12 +268,12 @@ function Action({
         <button
             type="button"
             onClick={onClick}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/[0.05] hover:text-purple-300"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.05] hover:text-purple-300 sm:flex-none sm:px-3 sm:text-sm"
         >
-            <Icon name={icon} size={18} />
+            <Icon name={icon} size={16} />
             <span>{label}</span>
             {count && (
-                <span className="text-xs text-slate-600">
+                <span className="text-[10px] text-slate-600 sm:text-xs">
                     {count}
                 </span>
             )}
@@ -270,6 +285,7 @@ export default function Home() {
     const router = useRouter();
 
     const [session, setSession] = useState<Session | null>(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
     useEffect(() => {
         let mounted = true;
@@ -316,6 +332,7 @@ export default function Home() {
     async function handleLogout() {
         await supabase.auth.signOut();
         setSession(null);
+        setMobileMenuOpen(false);
         router.push("/");
     }
 
@@ -325,32 +342,33 @@ export default function Home() {
         "Safiullah";
 
     return (
-        <main className="min-h-screen overflow-x-hidden bg-[#060913] text-white">
+        <main className="min-h-screen overflow-x-hidden bg-[#060913] pb-20 text-white md:pb-6">
             <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(99,102,241,.18),transparent_35%),radial-gradient(circle_at_100%_30%,rgba(168,85,247,.09),transparent_25%)]" />
 
             {/* TOP NAVIGATION */}
-            <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#080b15]/85 backdrop-blur-xl">
-                <div className="mx-auto flex h-[74px] max-w-[1600px] items-center gap-6 px-5">
+            <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#080b15]/90 backdrop-blur-xl">
+                <div className="mx-auto flex h-[68px] max-w-[1600px] items-center justify-between gap-4 px-4 sm:h-[74px] sm:px-5">
 
-                    <div className="flex min-w-[170px] items-center gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-[0_0_25px_rgba(124,58,237,.4)]">
-                            <span className="text-xl font-black">
+                    <div className="flex items-center gap-3">
+                        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-[0_0_25px_rgba(124,58,237,.4)] sm:h-10 sm:w-10">
+                            <span className="text-lg font-black sm:text-xl">
                                 L
                             </span>
                         </div>
 
                         <div>
-                            <div className="text-xl font-black tracking-tight">
+                            <div className="text-lg font-black tracking-tight sm:text-xl">
                                 LPE
                             </div>
 
-                            <div className="text-[8px] font-semibold tracking-[0.18em] text-slate-500">
+                            <div className="text-[7px] font-semibold tracking-[0.16em] text-slate-500 sm:text-[8px] sm:tracking-[0.18em]">
                                 LEARN · PROVE · EARN
                             </div>
                         </div>
                     </div>
 
-                    <div className="hidden min-w-[330px] items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-4 py-3 lg:flex">
+                    {/* SEARCH INPUT (Desktop) */}
+                    <div className="hidden min-w-[280px] items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-4 py-2.5 lg:flex xl:min-w-[330px] xl:py-3">
                         <span className="text-slate-500">
                             <Icon name="search" size={18} />
                         </span>
@@ -358,7 +376,7 @@ export default function Home() {
                         <input
                             onClick={protectedAction}
                             className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                            placeholder="Search jobs, people, skills, opportunities..."
+                            placeholder="Search jobs, people, skills..."
                         />
 
                         <kbd className="rounded bg-white/[0.06] px-2 py-1 text-[10px] text-slate-500">
@@ -366,11 +384,11 @@ export default function Home() {
                         </kbd>
                     </div>
 
-                    <nav className="mx-auto hidden items-center gap-2 md:flex">
-
+                    {/* DESKTOP NAV */}
+                    <nav className="mx-auto hidden items-center gap-1 md:flex xl:gap-2">
                         <button
                             type="button"
-                            className="relative flex flex-col items-center gap-1 rounded-xl bg-purple-500/10 px-4 py-2 text-xs text-purple-300"
+                            className="relative flex flex-col items-center gap-1 rounded-xl bg-purple-500/10 px-3 py-2 text-xs text-purple-300 xl:px-4"
                         >
                             <Icon name="home" size={20} />
                             <span>Home</span>
@@ -386,7 +404,7 @@ export default function Home() {
                                 type="button"
                                 key={label}
                                 onClick={protectedAction}
-                                className="relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 text-xs text-slate-400 transition hover:text-white"
+                                className="relative flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-xs text-slate-400 transition hover:text-white xl:px-4"
                             >
                                 <Icon
                                     name={icon as IconName}
@@ -404,80 +422,156 @@ export default function Home() {
                         ))}
                     </nav>
 
-                    {!session ? (
-                        <div className="ml-auto hidden items-center gap-2 sm:flex">
+                    {/* AUTH / PROFILE USER MENU */}
+                    <div className="flex items-center gap-3">
+                        {!session ? (
+                            <div className="hidden items-center gap-2 sm:flex">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/auth/login")}
+                                    className="rounded-xl border border-white/10 px-3.5 py-2.5 text-xs font-semibold text-white/70 transition hover:bg-white/5 hover:text-white sm:px-4 sm:py-3 sm:text-sm"
+                                >
+                                    Login
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/auth/signup")}
+                                    className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-2.5 text-xs font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02] sm:px-5 sm:py-3 sm:text-sm"
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="hidden items-center gap-2 sm:flex">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/dashboard")}
+                                    className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-2.5 text-xs font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02] sm:px-5 sm:py-3 sm:text-sm"
+                                >
+                                    Dashboard
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="rounded-xl border border-white/10 px-3.5 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white sm:px-4 sm:py-3 sm:text-sm"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() =>
-                                    router.push("/auth/login")
-                                }
-                                className="rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/5 hover:text-white"
+                                onClick={protectedAction}
                             >
-                                Login
+                                <Avatar
+                                    initials={
+                                        userName
+                                            .charAt(0)
+                                            .toUpperCase()
+                                    }
+                                    size="sm"
+                                />
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    router.push("/auth/signup")
-                                }
-                                className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02]"
-                            >
-                                Sign Up
-                            </button>
+                            <span className="hidden text-sm font-semibold lg:block">
+                                {userName}
+                            </span>
                         </div>
-                    ) : (
-                        <div className="ml-auto flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    router.push("/dashboard")
-                                }
-                                className="hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.25)] transition hover:scale-[1.02] sm:flex"
-                            >
-                                Dashboard
-                            </button>
 
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="hidden rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white sm:block"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-2">
+                        {/* MOBILE MENU TOGGLE BUTTON */}
                         <button
                             type="button"
-                            onClick={protectedAction}
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 md:hidden"
                         >
-                            <Avatar
-                                initials={
-                                    userName
-                                        .charAt(0)
-                                        .toUpperCase()
-                                }
-                                size="sm"
-                            />
+                            <Icon name={mobileMenuOpen ? "close" : "menu"} size={22} />
                         </button>
-
-                        <span className="hidden text-sm font-semibold lg:block">
-                            {userName}
-                        </span>
                     </div>
                 </div>
+
+                {/* MOBILE DRAWER / MENU DROPDOWN */}
+                {mobileMenuOpen && (
+                    <div className="border-t border-white/10 bg-[#070a14] px-4 py-5 md:hidden">
+                        <div className="mb-4 space-y-2">
+                            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                                <p className="text-xs text-slate-400">Signed in as</p>
+                                <p className="font-bold text-white">{userName}</p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    if (requireAuth()) router.push("/courses");
+                                }}
+                                className="flex w-full items-center justify-between rounded-xl bg-purple-500/10 px-4 py-3 text-sm font-semibold text-purple-300"
+                            >
+                                <span>📚 Explore All Courses</span>
+                                <span className="text-xs bg-purple-500/20 px-2 py-0.5 rounded-full">NEW</span>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            {!session ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            router.push("/auth/login");
+                                        }}
+                                        className="rounded-xl border border-white/10 py-3 text-center text-sm font-semibold"
+                                    >
+                                        Login
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            router.push("/auth/signup");
+                                        }}
+                                        className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 py-3 text-center text-sm font-semibold"
+                                    >
+                                        Sign Up
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            router.push("/dashboard");
+                                        }}
+                                        className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 py-3 text-center text-sm font-semibold"
+                                    >
+                                        Dashboard
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="rounded-xl border border-white/10 py-3 text-center text-sm font-semibold text-red-400"
+                                    >
+                                        Logout
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </header>
 
-            <div className="relative mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-5 py-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+            {/* MAIN CONTENT GRID */}
+            <div className="relative mx-auto grid max-w-[1600px] grid-cols-1 gap-6 px-3 py-4 sm:px-5 sm:py-6 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
 
-                {/* LEFT SIDEBAR */}
+                {/* LEFT SIDEBAR (Desktop) */}
                 <aside className="hidden xl:block">
                     <div className="sticky top-24 space-y-5">
-
                         <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
-
                             <div className="h-20 bg-[linear-gradient(135deg,rgba(124,58,237,.35),rgba(14,165,233,.12),rgba(6,9,19,.2))]" />
 
                             <div className="-mt-10 px-5 pb-5">
@@ -498,10 +592,7 @@ export default function Home() {
                                         <h2 className="font-bold">
                                             {userName}
                                         </h2>
-
-                                        <span className="text-blue-400">
-                                            ✓
-                                        </span>
+                                        <span className="text-blue-400">✓</span>
                                     </div>
 
                                     <p className="mt-1 text-xs leading-5 text-slate-400">
@@ -511,13 +602,9 @@ export default function Home() {
                                     </p>
 
                                     <div className="mt-3 flex gap-3 text-xs text-slate-500">
-                                        <span>
-                                            1.2K Connections
-                                        </span>
+                                        <span>1.2K Connections</span>
                                         <span>•</span>
-                                        <span>
-                                            47 Posts
-                                        </span>
+                                        <span>47 Posts</span>
                                     </div>
                                 </div>
 
@@ -526,7 +613,6 @@ export default function Home() {
                                         <span className="text-slate-400">
                                             Profile Strength
                                         </span>
-
                                         <span className="font-semibold text-cyan-300">
                                             82%
                                         </span>
@@ -540,7 +626,6 @@ export default function Home() {
 
                             {/* SIDEBAR MENU */}
                             <div className="border-t border-white/[0.06] p-3">
-
                                 <NavItem
                                     icon="home"
                                     label="Home Feed"
@@ -661,10 +746,10 @@ export default function Home() {
                 </aside>
 
                 {/* MAIN FEED */}
-                <section className="min-w-0 space-y-5">
+                <section className="min-w-0 space-y-4 sm:space-y-5">
 
-                    <div className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5 shadow-2xl shadow-black/20">
-
+                    {/* CREATE POST BOX */}
+                    <div className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-4 sm:p-5 shadow-2xl shadow-black/20">
                         <div className="flex gap-3">
                             <button
                                 type="button"
@@ -682,11 +767,11 @@ export default function Home() {
                                 onClick={protectedAction}
                                 readOnly={!session}
                                 placeholder="What are you working on today?"
-                                className="h-14 flex-1 rounded-xl border border-white/[0.08] bg-[#090d17] px-5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-purple-500/50"
+                                className="h-12 sm:h-14 flex-1 rounded-xl border border-white/[0.08] bg-[#090d17] px-4 sm:px-5 text-xs sm:text-sm text-white outline-none placeholder:text-slate-500 focus:border-purple-500/50"
                             />
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-3">
+                        <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
                             {[
                                 ["briefcase", "Post a Job", "text-orange-400"],
                                 ["project", "Share Project", "text-cyan-400"],
@@ -697,12 +782,12 @@ export default function Home() {
                                     type="button"
                                     key={label}
                                     onClick={protectedAction}
-                                    className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-4 py-2.5 text-xs text-slate-300 transition hover:border-purple-500/40 hover:bg-purple-500/10"
+                                    className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[11px] sm:px-4 sm:py-2.5 sm:text-xs text-slate-300 transition hover:border-purple-500/40 hover:bg-purple-500/10"
                                 >
                                     <span className={color}>
                                         <Icon
                                             name={icon as IconName}
-                                            size={16}
+                                            size={15}
                                         />
                                     </span>
                                     {label}
@@ -710,57 +795,31 @@ export default function Home() {
                             ))}
                         </div>
 
-                        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
-
-                            <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ▣ Photo/Video
+                        <div className="mt-4 sm:mt-5 flex items-center justify-between border-t border-white/[0.06] pt-3 sm:pt-4">
+                            <div className="flex flex-wrap gap-2.5 sm:gap-4 text-[11px] sm:text-xs text-slate-500">
+                                <button type="button" onClick={protectedAction}>
+                                    📷 Photo
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ▥ Poll
+                                <button type="button" onClick={protectedAction}>
+                                    📊 Poll
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ◫ Document
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    🔗 Link
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ▣ Event
+                                <button type="button" onClick={protectedAction}>
+                                    📄 Doc
                                 </button>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={protectedAction}
-                                className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-8 py-3 text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.3)]"
+                                className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-500 px-5 py-2.5 sm:px-8 sm:py-3 text-xs sm:text-sm font-semibold shadow-[0_10px_30px_rgba(124,58,237,.3)]"
                             >
                                 Post
                             </button>
                         </div>
                     </div>
 
-                    {/* FEED FILTER */}
-                    <div className="flex flex-wrap items-center gap-2">
+                    {/* FEED FILTER (Horizontally Scrollable on Mobile) */}
+                    <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
                         {[
                             "For You",
                             "Opportunities",
@@ -776,9 +835,9 @@ export default function Home() {
                                         ? undefined
                                         : protectedAction
                                 }
-                                className={`rounded-full px-5 py-2.5 text-sm transition ${
+                                className={`shrink-0 rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm transition ${
                                     index === 0
-                                        ? "border border-purple-500/50 bg-purple-500/15 text-purple-300"
+                                        ? "border border-purple-500/50 bg-purple-500/15 text-purple-300 font-semibold"
                                         : "border border-white/[0.07] bg-white/[0.025] text-slate-400 hover:text-white"
                                 }`}
                             >
@@ -789,56 +848,51 @@ export default function Home() {
 
                     {/* JOB POST */}
                     <article className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
-                        <div className="p-6">
-
+                        <div className="p-4 sm:p-6">
                             <div className="flex items-start justify-between">
                                 <div className="flex gap-3">
-                                    <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 font-bold">
+                                    <div className="grid h-10 w-10 sm:h-12 sm:w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 text-sm sm:text-base font-bold">
                                         T
                                     </div>
 
                                     <div>
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold">
+                                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <h3 className="text-sm sm:text-base font-semibold">
                                                 TechNova Solutions
                                             </h3>
-
-                                            <span className="text-cyan-400">
-                                                ✓
-                                            </span>
-
-                                            <span className="text-xs text-emerald-400">
+                                            <span className="text-cyan-400 text-xs">✓</span>
+                                            <span className="text-[10px] sm:text-xs text-emerald-400">
                                                 • Hiring
                                             </span>
                                         </div>
 
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500">
                                             2 hours ago • Remote
                                         </p>
                                     </div>
                                 </div>
 
-                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+                                <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] sm:text-xs text-amber-300">
                                     ⭐ Featured
                                 </span>
                             </div>
 
-                            <div className="mt-5 grid gap-5 md:grid-cols-[1fr_270px]">
+                            <div className="mt-4 sm:mt-5 grid gap-4 sm:gap-5 md:grid-cols-[1fr_270px]">
                                 <div>
-                                    <h2 className="text-xl font-bold">
+                                    <h2 className="text-base sm:text-xl font-bold">
                                         🚀 We&apos;re Hiring{" "}
                                         <span className="text-blue-400">
                                             Frontend Developer
                                         </span>
                                     </h2>
 
-                                    <p className="mt-3 text-sm leading-7 text-slate-400">
+                                    <p className="mt-2 sm:mt-3 text-xs sm:text-sm leading-6 sm:leading-7 text-slate-400">
                                         We&apos;re looking for a passionate Frontend
                                         Developer to join our remote team and build
                                         modern web applications for global clients.
                                     </p>
 
-                                    <div className="mt-4 flex flex-wrap gap-2">
+                                    <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
                                         {[
                                             "React",
                                             "Next.js",
@@ -847,37 +901,33 @@ export default function Home() {
                                         ].map((skill) => (
                                             <span
                                                 key={skill}
-                                                className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-1.5 text-xs text-cyan-200"
+                                                className="rounded-lg border border-cyan-400/15 bg-cyan-400/[0.05] px-2.5 py-1 text-[11px] sm:text-xs text-cyan-200"
                                             >
                                                 {skill}
                                             </span>
                                         ))}
                                     </div>
 
-                                    <div className="mt-5 flex flex-wrap gap-3 text-xs">
-                                        <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-300">
-                                            💰 $2,500 – $4,000 / month
+                                    <div className="mt-4 sm:mt-5 flex flex-wrap gap-2 text-[11px] sm:text-xs">
+                                        <span className="rounded-full bg-emerald-500/10 px-3 py-1.5 text-emerald-300 font-medium">
+                                            💰 $2,500 – $4,000 / mo
                                         </span>
 
-                                        <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
-                                            📍 Remote Worldwide
+                                        <span className="rounded-full bg-white/[0.04] px-3 py-1.5 text-slate-400">
+                                            📍 Remote
                                         </span>
 
-                                        <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
+                                        <span className="rounded-full bg-white/[0.04] px-3 py-1.5 text-slate-400">
                                             💼 Full-time
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl border border-purple-500/20 bg-[radial-gradient(circle_at_50%_20%,rgba(124,58,237,.6),transparent_45%),linear-gradient(135deg,#111a36,#070a13)] p-5">
-
-                                    <div className="flex h-32 items-center justify-center rounded-lg border border-purple-400/20 bg-black/30">
+                                <div className="rounded-xl border border-purple-500/20 bg-[radial-gradient(circle_at_50%_20%,rgba(124,58,237,.6),transparent_45%),linear-gradient(135deg,#111a36,#070a13)] p-4 sm:p-5">
+                                    <div className="flex h-28 sm:h-32 items-center justify-center rounded-lg border border-purple-400/20 bg-black/30">
                                         <div className="text-center">
-                                            <div className="text-4xl">
-                                                ⌘
-                                            </div>
-
-                                            <p className="mt-2 text-xs text-purple-200">
+                                            <div className="text-3xl sm:text-4xl">⌘</div>
+                                            <p className="mt-1 text-[10px] sm:text-xs text-purple-200">
                                                 Remote Development
                                             </p>
                                         </div>
@@ -886,139 +936,89 @@ export default function Home() {
                                     <button
                                         type="button"
                                         onClick={protectedAction}
-                                        className="mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-500 py-3 text-sm font-semibold"
+                                        className="mt-3 sm:mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-500 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold"
                                     >
                                         Apply Now →
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                    className="text-pink-400"
-                                >
+                            <div className="mt-4 sm:mt-5 flex gap-4 sm:gap-5 text-[11px] sm:text-xs text-slate-500">
+                                <button type="button" onClick={protectedAction} className="text-pink-400">
                                     ♥ 432
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
+                                <button type="button" onClick={protectedAction}>
                                     ▢ 68 Comments
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
+                                <button type="button" onClick={protectedAction}>
                                     🔖 124 Saves
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap justify-between border-t border-white/[0.06] px-4 py-2">
-                            <Action
-                                icon="heart"
-                                label="Appreciate"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="comment"
-                                label="Comment"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="share"
-                                label="Share"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="save"
-                                label="Save"
-                                onClick={protectedAction}
-                            />
+                        <div className="flex justify-between border-t border-white/[0.06] px-2 py-1 sm:px-4 sm:py-2">
+                            <Action icon="heart" label="Appreciate" onClick={protectedAction} />
+                            <Action icon="comment" label="Comment" onClick={protectedAction} />
+                            <Action icon="share" label="Share" onClick={protectedAction} />
+                            <Action icon="save" label="Save" onClick={protectedAction} />
                         </div>
                     </article>
 
                     {/* PROJECT POST */}
                     <article className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b101c]">
-                        <div className="p-6">
-
+                        <div className="p-4 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex gap-3">
-                                    <Avatar
-                                        initials="A"
-                                        color="purple"
-                                        size="md"
-                                    />
+                                    <Avatar initials="A" color="purple" size="md" />
 
                                     <div>
-                                        <h3 className="font-semibold">
-                                            Ayesha | UI/UX Designer{" "}
-                                            <span className="text-blue-400">
-                                                ✓
-                                            </span>
+                                        <h3 className="text-sm sm:text-base font-semibold">
+                                            Ayesha | UI/UX Designer <span className="text-blue-400">✓</span>
                                         </h3>
 
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500">
                                             3 hours ago
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
-                                        ✦ Project Showcase
-                                    </span>
-
-                                    <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-                                        ⭐ Featured
+                                <div className="flex gap-1.5 sm:gap-2">
+                                    <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] sm:text-xs text-blue-300">
+                                        ✦ Showcase
                                     </span>
                                 </div>
                             </div>
 
-                            <p className="mt-5 text-sm text-slate-300">
+                            <p className="mt-3 sm:mt-5 text-xs sm:text-sm text-slate-300">
                                 Excited to share my latest project! 🎉 Just
                                 completed a modern SaaS dashboard design for a
                                 UK-based client.
                             </p>
 
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {[
-                                    "UI/UX",
-                                    "Figma",
-                                    "Product Design",
-                                    "SaaS",
-                                ].map((item) => (
+                            <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+                                {["UI/UX", "Figma", "Product Design", "SaaS"].map((item) => (
                                     <span
                                         key={item}
-                                        className="rounded-full bg-purple-500/10 px-3 py-1.5 text-xs text-purple-300"
+                                        className="rounded-full bg-purple-500/10 px-2.5 py-1 text-[10px] sm:text-xs text-purple-300"
                                     >
                                         {item}
                                     </span>
                                 ))}
                             </div>
 
-                            <div className="mt-5 overflow-hidden rounded-xl border border-white/[0.08] bg-[#090d17]">
-
-                                <div className="grid h-44 grid-cols-3 gap-3 bg-[radial-gradient(circle_at_20%_20%,rgba(124,58,237,.5),transparent_30%),radial-gradient(circle_at_80%_70%,rgba(34,211,238,.35),transparent_25%)] p-4">
+                            <div className="mt-4 sm:mt-5 overflow-hidden rounded-xl border border-white/[0.08] bg-[#090d17]">
+                                <div className="grid h-36 sm:h-44 grid-cols-3 gap-2 sm:gap-3 bg-[radial-gradient(circle_at_20%_20%,rgba(124,58,237,.5),transparent_30%),radial-gradient(circle_at_80%_70%,rgba(34,211,238,.35),transparent_25%)] p-3 sm:p-4">
                                     <div className="rounded-lg border border-white/10 bg-white/[0.05]" />
                                     <div className="rounded-lg border border-white/10 bg-white/[0.08]" />
                                     <div className="rounded-lg border border-white/10 bg-white/[0.04]" />
                                 </div>
 
-                                <div className="flex items-center justify-between p-4">
+                                <div className="flex items-center justify-between p-3 sm:p-4">
                                     <div>
-                                        <h4 className="font-semibold">
+                                        <h4 className="text-xs sm:text-sm font-semibold">
                                             SaaS Dashboard Design
                                         </h4>
-
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500">
                                             Complete UI/UX case study
                                         </p>
                                     </div>
@@ -1026,147 +1026,31 @@ export default function Home() {
                                     <button
                                         type="button"
                                         onClick={protectedAction}
-                                        className="rounded-lg bg-blue-600/80 px-4 py-2 text-xs font-semibold"
+                                        className="rounded-lg bg-blue-600/80 px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold"
                                     >
-                                        View Full Project →
+                                        View →
                                     </button>
                                 </div>
                             </div>
-
-                            <div className="mt-5 flex gap-5 text-xs text-slate-500">
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                    className="text-pink-400"
-                                >
-                                    ♥ 298
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ▢ 42 Comments
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                >
-                                    ↗ 63 Shares
-                                </button>
-                            </div>
                         </div>
 
-                        <div className="flex flex-wrap justify-between border-t border-white/[0.06] px-4 py-2">
-                            <Action
-                                icon="heart"
-                                label="Appreciate"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="comment"
-                                label="Comment"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="project"
-                                label="Collaborate"
-                                onClick={protectedAction}
-                            />
-
-                            <Action
-                                icon="share"
-                                label="Share"
-                                onClick={protectedAction}
-                            />
-                        </div>
-                    </article>
-
-                    {/* FREELANCE POST */}
-                    <article className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-6">
-                        <div className="flex gap-3">
-
-                            <Avatar
-                                initials="H"
-                                color="orange"
-                                size="md"
-                            />
-
-                            <div className="min-w-0 flex-1">
-
-                                <h3 className="font-semibold">
-                                    Hassan | Amazon VA{" "}
-                                    <span className="text-blue-400">
-                                        ✓
-                                    </span>
-                                </h3>
-
-                                <p className="mt-1 text-xs text-slate-500">
-                                    5 hours ago
-                                </p>
-
-                                <h2 className="mt-5 font-semibold">
-                                    Looking for an Amazon FBA Virtual Assistant
-                                </h2>
-
-                                <p className="mt-2 text-sm leading-6 text-slate-400">
-                                    Need an experienced Amazon VA for product
-                                    research, listing optimization and long-term
-                                    support.
-                                </p>
-
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    {[
-                                        "Amazon FBA",
-                                        "Product Research",
-                                        "PPC",
-                                    ].map((item) => (
-                                        <span
-                                            key={item}
-                                            className="rounded-lg bg-orange-500/[0.08] px-3 py-1.5 text-xs text-orange-300"
-                                        >
-                                            {item}
-                                        </span>
-                                    ))}
-                                </div>
-
-                                <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-
-                                    <div className="flex flex-wrap gap-3 text-xs">
-                                        <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-emerald-300">
-                                            💰 $400 – $800 / month
-                                        </span>
-
-                                        <span className="rounded-full bg-white/[0.04] px-3 py-2 text-slate-400">
-                                            📍 Remote
-                                        </span>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={protectedAction}
-                                        className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-bold text-black"
-                                    >
-                                        I&apos;m Interested
-                                    </button>
-                                </div>
-                            </div>
+                        <div className="flex justify-between border-t border-white/[0.06] px-2 py-1 sm:px-4 sm:py-2">
+                            <Action icon="heart" label="Appreciate" onClick={protectedAction} />
+                            <Action icon="comment" label="Comment" onClick={protectedAction} />
+                            <Action icon="project" label="Collaborate" onClick={protectedAction} />
+                            <Action icon="share" label="Share" onClick={protectedAction} />
                         </div>
                     </article>
                 </section>
 
-                {/* RIGHT SIDEBAR */}
+                {/* RIGHT SIDEBAR (Desktop) */}
                 <aside className="hidden xl:block">
                     <div className="sticky top-24 space-y-5">
 
                         <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
-
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">
-                                    🔥 Trending Opportunities
+                                    🔥 Trending Jobs
                                 </h3>
 
                                 <button
@@ -1183,8 +1067,6 @@ export default function Home() {
                                     ["React Developer", "$3k–$6k", "blue"],
                                     ["Shopify Store Manager", "$1.5k–$3k", "green"],
                                     ["Video Editor", "$800–$1.5k", "purple"],
-                                    ["Cybersecurity Analyst", "$4k–$7k", "blue"],
-                                    ["Content Writer", "$600–$1k", "purple"],
                                 ].map(([title, salary, color]) => (
                                     <button
                                         type="button"
@@ -1193,9 +1075,8 @@ export default function Home() {
                                         className="flex w-full items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.025] p-3 text-left"
                                     >
                                         <div className="flex items-center gap-3">
-
                                             <div
-                                                className={`grid h-10 w-10 place-items-center rounded-lg ${
+                                                className={`grid h-9 w-9 place-items-center rounded-lg ${
                                                     color === "green"
                                                         ? "bg-emerald-500/15 text-emerald-300"
                                                         : color === "purple"
@@ -1203,20 +1084,12 @@ export default function Home() {
                                                           : "bg-blue-500/15 text-blue-300"
                                                 }`}
                                             >
-                                                <Icon
-                                                    name="briefcase"
-                                                    size={18}
-                                                />
+                                                <Icon name="briefcase" size={16} />
                                             </div>
 
                                             <div>
-                                                <p className="text-xs font-medium">
-                                                    {title}
-                                                </p>
-
-                                                <p className="mt-1 text-[10px] text-slate-500">
-                                                    Remote
-                                                </p>
+                                                <p className="text-xs font-medium">{title}</p>
+                                                <p className="mt-0.5 text-[10px] text-slate-500">Remote</p>
                                             </div>
                                         </div>
 
@@ -1228,156 +1101,58 @@ export default function Home() {
                             </div>
                         </section>
 
-                        <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
-
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">
-                                    People You May Connect With
-                                </h3>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                    className="text-xs text-cyan-300"
-                                >
-                                    See All →
-                                </button>
-                            </div>
-
-                            <div className="mt-5 space-y-4">
-                                {[
-                                    ["Ahmed Raza", "Full Stack Developer", "A"],
-                                    ["Sara Khan", "UI/UX Designer", "S"],
-                                    ["Bilal Ahmad", "Amazon Expert USA", "B"],
-                                    ["Hira Malik", "Digital Marketer", "H"],
-                                ].map(([name, role, initial]) => (
-                                    <div
-                                        key={name}
-                                        className="flex items-center gap-3"
-                                    >
-                                        <button
-                                            type="button"
-                                            onClick={protectedAction}
-                                        >
-                                            <Avatar
-                                                initials={initial}
-                                                size="sm"
-                                                color={
-                                                    initial === "S"
-                                                        ? "purple"
-                                                        : "blue"
-                                                }
-                                            />
-                                        </button>
-
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-xs font-semibold">
-                                                {name}
-                                            </p>
-
-                                            <p className="truncate text-[10px] text-slate-500">
-                                                {role}
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={protectedAction}
-                                            className="rounded-lg border border-blue-500/30 px-3 py-2 text-xs text-blue-300 transition hover:bg-blue-500/10"
-                                        >
-                                            Connect
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
-
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">
-                                    Recommended Skills
-                                </h3>
-
-                                <button
-                                    type="button"
-                                    onClick={protectedAction}
-                                    className="text-xs text-cyan-300"
-                                >
-                                    See All →
-                                </button>
-                            </div>
-
-                            <div className="mt-5 space-y-3">
-                                {[
-                                    ["Next.js", "8.4K learners"],
-                                    ["AI & Prompt Engineering", "18.7K learners"],
-                                    ["Digital Marketing", "22.1K learners"],
-                                    ["Shopify", "9.6K learners"],
-                                ].map(([skill, learners]) => (
-                                    <button
-                                        type="button"
-                                        key={skill}
-                                        onClick={protectedAction}
-                                        className="flex w-full items-center gap-3 rounded-xl bg-white/[0.025] p-3 text-left"
-                                    >
-                                        <div className="grid h-10 w-10 place-items-center rounded-lg bg-purple-500/10 text-sm font-bold text-purple-300">
-                                            {skill[0]}
-                                        </div>
-
-                                        <div>
-                                            <p className="text-xs font-medium">
-                                                {skill}
-                                            </p>
-
-                                            <p className="mt-1 text-[10px] text-slate-500">
-                                                {learners}
-                                            </p>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section className="rounded-2xl border border-white/[0.08] bg-[#0b101c] p-5">
-
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">
-                                    Platform Activity
-                                </h3>
-
-                                <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300">
-                                    ● LIVE
-                                </span>
-                            </div>
-
-                            <div className="mt-5 grid grid-cols-2 gap-3">
-                                {[
-                                    ["1,247", "Active Learners"],
-                                    ["342", "New Opportunities"],
-                                    ["56", "Projects Shared"],
-                                    ["12", "Success Stories"],
-                                ].map(([number, label]) => (
-                                    <button
-                                        type="button"
-                                        key={label}
-                                        onClick={protectedAction}
-                                        className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-left"
-                                    >
-                                        <p className="font-bold text-purple-200">
-                                            {number}
-                                        </p>
-
-                                        <p className="mt-1 text-[10px] text-slate-500">
-                                            {label}
-                                        </p>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-
                     </div>
                 </aside>
+            </div>
+
+            {/* MOBILE BOTTOM NAVIGATION BAR */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/10 bg-[#070913]/95 px-2 py-2 backdrop-blur-lg md:hidden">
+                <button
+                    type="button"
+                    onClick={() => router.push("/")}
+                    className="flex flex-col items-center gap-0.5 text-purple-400"
+                >
+                    <Icon name="home" size={20} />
+                    <span className="text-[10px] font-medium">Home</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (requireAuth()) router.push("/courses");
+                    }}
+                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
+                >
+                    <Icon name="courses" size={20} />
+                    <span className="text-[10px] font-medium">Courses</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={protectedAction}
+                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
+                >
+                    <Icon name="briefcase" size={20} />
+                    <span className="text-[10px] font-medium">Jobs</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={protectedAction}
+                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
+                >
+                    <Icon name="message" size={20} />
+                    <span className="text-[10px] font-medium">Messages</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={protectedAction}
+                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
+                >
+                    <Icon name="user" size={20} />
+                    <span className="text-[10px] font-medium">Profile</span>
+                </button>
             </div>
         </main>
     );
