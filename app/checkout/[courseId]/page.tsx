@@ -48,7 +48,7 @@ export default function CheckoutPage() {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -90,10 +90,10 @@ export default function CheckoutPage() {
 
   async function handleSubmitPayment(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setErrorMessage("");
 
     if (!transactionId.trim()) {
-      setError("Please enter the Transaction ID (TID).");
+      setErrorMessage("Please enter the Transaction ID (TID).");
       return;
     }
 
@@ -151,9 +151,9 @@ export default function CheckoutPage() {
       setSuccess(true);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        setErrorMessage(err.message);
       } else {
-        setError("Failed to submit payment request.");
+        setErrorMessage("Failed to submit payment request.");
       }
     } finally {
       setSubmitting(false);
@@ -261,9 +261,9 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {error ? (
+            {errorMessage ? (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                {String(error)}
+                {errorMessage}
               </div>
             ) : null}
 
