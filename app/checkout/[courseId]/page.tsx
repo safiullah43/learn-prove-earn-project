@@ -78,7 +78,7 @@ export default function CheckoutPage() {
         } else {
           setCourse(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error loading course:", err);
       } finally {
         setLoading(false);
@@ -149,9 +149,9 @@ export default function CheckoutPage() {
       }, { onConflict: "user_id,course_id" });
 
       setSuccess(true);
-    } catch (err) {
-      const errorObj = err as Error;
-      setErrorMessage(errorObj.message || "Failed to submit payment request.");
+    } catch (err: unknown) {
+      const e = err as Error;
+      setErrorMessage(String(e.message || "Failed to submit payment request."));
     } finally {
       setSubmitting(false);
     }
@@ -258,11 +258,11 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {errorMessage !== "" && (
+            {Boolean(errorMessage) ? (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                {errorMessage}
+                {String(errorMessage)}
               </div>
-            )}
+            ) : null}
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
