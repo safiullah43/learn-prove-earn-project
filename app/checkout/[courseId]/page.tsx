@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -36,7 +36,7 @@ const PAYMENT_ACCOUNTS = {
   },
 };
 
-export default function CheckoutPage() {
+export default function CheckoutPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const courseId = typeof params?.courseId === "string" ? params.courseId : "";
@@ -151,7 +151,8 @@ export default function CheckoutPage() {
       setSuccess(true);
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setErrorMessage(String(e?.message || "Failed to submit payment request."));
+      const safeMessage: string = String(e?.message || "Failed to submit payment request.");
+      setErrorMessage(safeMessage);
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +187,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const hasError = errorMessage.length > 0;
+  const textMessage: string = String(errorMessage || "");
 
   return (
     <main className="min-h-screen bg-[#07070a] text-white py-12 px-4 sm:px-6 lg:px-8">
@@ -260,9 +261,9 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {hasError ? (
+            {textMessage.length > 0 ? (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                {String(errorMessage)}
+                <span>{textMessage}</span>
               </div>
             ) : null}
 
