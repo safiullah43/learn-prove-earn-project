@@ -4,6 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+export async function generateStaticParams() {
+  return [
+    { "course-id": "1" },
+    { "course-id": "2" },
+    { "course-id": "3" },
+    { "course-id": "4" },
+    { "course-id": "5" },
+    { "course-id": "6" },
+  ];
+}
+
 type Course = {
   id: string;
   title: string;
@@ -209,7 +220,7 @@ export default function CourseContentPage() {
       setError(
         err instanceof Error ? err.message : "Failed to load course content."
       );
-    } finally {
+    } fontally {
       setLoading(false);
     }
   }, [courseId, router]);
