@@ -1,36 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+
+// Supabase Connection setup for Website
+const supabaseUrl = "https://sqpwtagrewutewxbhubw.supabase.co";
+const supabaseAnonKey = "sb_publishable_fZr7LAmo3taXSkbwJ3VgyA_3YhgBG8r";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Course = {
-    id: number;
+    id: number | string;
     title: string;
     category: string;
     description: string;
-    level: string;
-    lessons: number;
-    duration: string;
-    students: string;
-    progress: number;
-    color: string;
-    icon: string;
-    premium: boolean;
+    level?: string;
+    lessons?: number;
+    duration?: string;
+    students?: string;
+    progress?: number;
+    price?: number;
+    color?: string;
+    icon?: string;
+    premium?: boolean;
 };
 
-const courses: Course[] = [
+const fallbackCourses: Course[] = [
     {
         id: 1,
         title: "Amazon FBA Mastery",
         category: "E-Commerce",
-        description:
-            "Learn product research, sourcing, listing optimization, PPC and how to build a profitable Amazon business.",
+        description: "Learn product research, sourcing, listing optimization, PPC and how to build a profitable Amazon business.",
         level: "Beginner to Advanced",
         lessons: 48,
         duration: "18 Hours",
         students: "2.4K",
         progress: 65,
+        price: 50,
         color: "from-orange-500 to-amber-400",
         icon: "📦",
         premium: false,
@@ -39,75 +46,15 @@ const courses: Course[] = [
         id: 2,
         title: "Shopify Store Masterclass",
         category: "E-Commerce",
-        description:
-            "Build, design and scale a professional Shopify store with winning products and conversion strategies.",
+        description: "Build, design and scale a professional Shopify store with winning products and conversion strategies.",
         level: "Beginner",
         lessons: 36,
         duration: "14 Hours",
         students: "1.8K",
         progress: 32,
+        price: 5000,
         color: "from-emerald-500 to-teal-400",
         icon: "🛍️",
-        premium: false,
-    },
-    {
-        id: 3,
-        title: "AI Automation",
-        category: "Artificial Intelligence",
-        description:
-            "Learn how to use AI tools and automation systems to create workflows, services and online income opportunities.",
-        level: "Intermediate",
-        lessons: 42,
-        duration: "16 Hours",
-        students: "3.1K",
-        progress: 0,
-        color: "from-purple-600 to-fuchsia-500",
-        icon: "🤖",
-        premium: true,
-    },
-    {
-        id: 4,
-        title: "Digital Marketing Pro",
-        category: "Marketing",
-        description:
-            "Master social media marketing, paid ads, content strategy, branding and customer acquisition.",
-        level: "Beginner to Advanced",
-        lessons: 52,
-        duration: "20 Hours",
-        students: "4.2K",
-        progress: 18,
-        color: "from-pink-500 to-rose-500",
-        icon: "📈",
-        premium: false,
-    },
-    {
-        id: 5,
-        title: "YouTube Automation",
-        category: "Content Creation",
-        description:
-            "Learn faceless channel creation, niche research, scripts, AI tools and YouTube monetization strategies.",
-        level: "Intermediate",
-        lessons: 40,
-        duration: "15 Hours",
-        students: "2.7K",
-        progress: 0,
-        color: "from-red-500 to-orange-500",
-        icon: "▶️",
-        premium: true,
-    },
-    {
-        id: 6,
-        title: "TikTok Automation",
-        category: "Content Creation",
-        description:
-            "Build automated TikTok content systems and learn audience growth, monetization and viral strategies.",
-        level: "Beginner",
-        lessons: 34,
-        duration: "12 Hours",
-        students: "2.1K",
-        progress: 0,
-        color: "from-cyan-500 to-blue-500",
-        icon: "🎵",
         premium: false,
     },
 ];
@@ -124,9 +71,44 @@ export default function CoursesPage() {
     const router = useRouter();
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState("All Courses");
+    const [coursesList, setCoursesList] = useState<Course[]>(fallbackCourses);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Live Courses from Supabase Database
+    useEffect(() => {
+        async function fetchLiveCourses() {
+            try {
+                const { data, error } = await supabase.from("courses").select("*");
+                if (data && data.length > 0 && !error) {
+                    const formatted = data.map((c: any, index: number) => ({
+                        id: c.id ?? index + 1,
+                        title: c.title || "Untitled Course",
+                        category: c.category || "E-Commerce",
+                        description: c.description || "Learn practical digital skills.",
+                        level: c.level || "Beginner to Advanced",
+                        lessons: c.lessons || 40,
+                        duration: c.duration || "15 Hours",
+                        students: c.students || "1.2K",
+                        progress: c.progress || 0,
+                        price: c.price ?? 50,
+                        color: c.color || "from-orange-500 to-amber-400",
+                        icon: c.icon || "📦",
+                        premium: c.price > 0,
+                    }));
+                    setCoursesList(formatted);
+                }
+            } catch (err) {
+                console.error("Error fetching live courses:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchLiveCourses();
+    }, []);
 
     const filteredCourses = useMemo(() => {
-        return courses.filter((course) => {
+        return coursesList.filter((course) => {
             const matchesCategory =
                 activeCategory === "All Courses" ||
                 course.category === activeCategory;
@@ -144,7 +126,7 @@ export default function CoursesPage() {
 
             return matchesCategory && matchesSearch;
         });
-    }, [search, activeCategory]);
+    }, [search, activeCategory, coursesList]);
 
     return (
         <main className="min-h-screen overflow-x-hidden bg-[#060913] pb-24 text-white md:pb-10">
@@ -240,7 +222,7 @@ export default function CoursesPage() {
                         <div className="mt-6 sm:mt-8 flex flex-wrap gap-2.5 sm:gap-4">
                             <div className="flex-1 min-w-[100px] rounded-xl border border-white/[0.08] bg-black/20 px-3.5 py-2.5 sm:px-5 sm:py-3 text-center sm:text-left">
                                 <p className="text-lg sm:text-xl font-bold text-purple-300">
-                                    6+
+                                    {coursesList.length}+
                                 </p>
                                 <p className="text-[10px] sm:text-xs text-slate-500">
                                     Courses
@@ -268,74 +250,7 @@ export default function CoursesPage() {
                     </div>
                 </section>
 
-                {/* Continue Learning */}
-                <section className="mt-8 sm:mt-10">
-                    <div className="flex flex-wrap items-end justify-between gap-2 sm:gap-4">
-                        <div>
-                            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-purple-400">
-                                Your Learning Journey
-                            </p>
-
-                            <h2 className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold">
-                                Continue Learning
-                            </h2>
-                        </div>
-
-                        <p className="text-xs sm:text-sm text-slate-500">
-                            Keep building your skills every day 🚀
-                        </p>
-                    </div>
-
-                    <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                        {courses
-                            .filter((course) => course.progress > 0)
-                            .slice(0, 3)
-                            .map((course) => (
-                                <div
-                                    key={course.id}
-                                    className="group rounded-2xl border border-white/[0.08] bg-[#0b101c] p-4 sm:p-5 transition hover:-translate-y-1 hover:border-purple-500/40"
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div
-                                            className={`grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-br ${course.color} text-xl sm:text-2xl shadow-lg`}
-                                        >
-                                            {course.icon}
-                                        </div>
-
-                                        <span className="rounded-full bg-purple-500/10 px-2.5 py-1 text-[10px] sm:text-xs text-purple-300 font-medium">
-                                            {course.progress}% Complete
-                                        </span>
-                                    </div>
-
-                                    <h3 className="mt-4 sm:mt-5 text-base sm:text-lg font-bold">
-                                        {course.title}
-                                    </h3>
-
-                                    <p className="mt-1 sm:mt-2 text-xs text-slate-500">
-                                        {course.lessons} Lessons · {course.duration}
-                                    </p>
-
-                                    <div className="mt-4 sm:mt-5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                                        <div
-                                            style={{
-                                                width: `${course.progress}%`,
-                                            }}
-                                            className={`h-full rounded-full bg-gradient-to-r ${course.color}`}
-                                        />
-                                    </div>
-
-                                    <Link
-                                        href={`/courses/${course.id}`}
-                                        className="mt-4 sm:mt-5 block w-full rounded-xl bg-white/[0.05] py-2.5 sm:py-3 text-center text-xs sm:text-sm font-semibold text-white transition hover:bg-purple-600"
-                                    >
-                                        Continue Learning →
-                                    </Link>
-                                </div>
-                            ))}
-                    </div>
-                </section>
-
-                {/* Categories */}
+                {/* Categories Filter */}
                 <section className="mt-10 sm:mt-12">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -353,17 +268,15 @@ export default function CoursesPage() {
                         </p>
                     </div>
 
-                    {/* Scrollable Categories on Mobile */}
                     <div className="no-scrollbar mt-4 sm:mt-6 flex items-center gap-2 overflow-x-auto pb-1">
                         {categories.map((category) => (
                             <button
                                 key={category}
                                 onClick={() => setActiveCategory(category)}
-                                className={`shrink-0 rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium transition ${
-                                    activeCategory === category
+                                className={`shrink-0 rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium transition ${activeCategory === category
                                         ? "bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-[0_8px_25px_rgba(124,58,237,.25)]"
                                         : "border border-white/[0.08] bg-white/[0.025] text-slate-400 hover:border-purple-500/40 hover:text-white"
-                                }`}
+                                    }`}
                             >
                                 {category}
                             </button>
@@ -382,24 +295,18 @@ export default function CoursesPage() {
                                 >
                                     {/* Card Top */}
                                     <div
-                                        className={`relative h-36 sm:h-40 overflow-hidden bg-gradient-to-br ${course.color}`}
+                                        className={`relative h-36 sm:h-40 overflow-hidden bg-gradient-to-br ${course.color || "from-orange-500 to-amber-400"}`}
                                     >
                                         <div className="absolute inset-0 bg-black/15" />
 
                                         <div className="absolute left-4 top-4 sm:left-6 sm:top-6 grid h-12 w-12 sm:h-16 sm:w-16 place-items-center rounded-2xl border border-white/20 bg-black/20 text-2xl sm:text-3xl backdrop-blur">
-                                            {course.icon}
+                                            {course.icon || "📦"}
                                         </div>
 
                                         <div className="absolute right-4 top-4 sm:right-5 sm:top-5">
-                                            {course.premium ? (
-                                                <span className="rounded-full bg-amber-400 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-bold text-black">
-                                                    👑 PREMIUM
-                                                </span>
-                                            ) : (
-                                                <span className="rounded-full bg-emerald-400 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-bold text-black">
-                                                    FREE
-                                                </span>
-                                            )}
+                                            <span className="rounded-full bg-amber-400 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-bold text-black">
+                                                Rs. {course.price}
+                                            </span>
                                         </div>
 
                                         <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-6">
@@ -413,7 +320,7 @@ export default function CoursesPage() {
                                     <div className="p-4 sm:p-6">
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[11px] sm:text-xs font-medium text-purple-300">
-                                                {course.level}
+                                                {course.level || "All Levels"}
                                             </span>
 
                                             <span className="text-[11px] sm:text-xs text-slate-500">
@@ -429,67 +336,11 @@ export default function CoursesPage() {
                                             {course.description}
                                         </p>
 
-                                        <div className="mt-4 sm:mt-5 grid grid-cols-3 gap-2 border-y border-white/[0.06] py-3 sm:py-4 text-center">
-                                            <div>
-                                                <p className="text-xs sm:text-sm font-bold">
-                                                    {course.lessons}
-                                                </p>
-                                                <p className="mt-0.5 text-[9px] sm:text-[10px] text-slate-500">
-                                                    Lessons
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <p className="text-xs sm:text-sm font-bold">
-                                                    {course.duration}
-                                                </p>
-                                                <p className="mt-0.5 text-[9px] sm:text-[10px] text-slate-500">
-                                                    Duration
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <p className="text-xs sm:text-sm font-bold">
-                                                    {course.students}
-                                                </p>
-                                                <p className="mt-0.5 text-[9px] sm:text-[10px] text-slate-500">
-                                                    Learners
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {course.progress > 0 && (
-                                            <div className="mt-4 sm:mt-5">
-                                                <div className="flex justify-between text-[11px] sm:text-xs">
-                                                    <span className="text-slate-500">
-                                                        Your Progress
-                                                    </span>
-
-                                                    <span className="font-semibold text-purple-300">
-                                                        {course.progress}%
-                                                    </span>
-                                                </div>
-
-                                                <div className="mt-1.5 sm:mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                                                    <div
-                                                        style={{
-                                                            width: `${course.progress}%`,
-                                                        }}
-                                                        className={`h-full rounded-full bg-gradient-to-r ${course.color}`}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
                                         <Link
                                             href={`/courses/${course.id}`}
-                                            className={`mt-5 sm:mt-6 block w-full rounded-xl bg-gradient-to-r ${course.color} py-3 sm:py-3.5 text-center text-xs sm:text-sm font-bold text-white transition hover:scale-[1.02]`}
+                                            className="mt-5 sm:mt-6 block w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 sm:py-3.5 text-center text-xs sm:text-sm font-bold text-white transition hover:scale-[1.02]"
                                         >
-                                            {course.progress > 0
-                                                ? "Continue Course →"
-                                                : course.premium
-                                                  ? "Unlock Premium →"
-                                                  : "Start Learning →"}
+                                            Enroll Now (Rs. {course.price}) →
                                         </Link>
                                     </div>
                                 </article>
@@ -503,10 +354,6 @@ export default function CoursesPage() {
                                 No Courses Found
                             </h3>
 
-                            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500">
-                                Try searching with another keyword or category.
-                            </p>
-
                             <button
                                 onClick={() => {
                                     setSearch("");
@@ -519,139 +366,6 @@ export default function CoursesPage() {
                         </div>
                     )}
                 </section>
-
-                {/* Learning Path */}
-                <section className="mt-10 sm:mt-14 rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#0b101c] p-5 sm:p-8 md:p-10">
-                    <div className="grid gap-8 lg:grid-cols-[1fr_1.5fr]">
-                        <div>
-                            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-purple-400">
-                                LPE Method
-                            </p>
-
-                            <h2 className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black">
-                                Learn. Prove.
-                                <br />
-                                <span className="text-purple-400">
-                                    Earn.
-                                </span>
-                            </h2>
-
-                            <p className="mt-3 sm:mt-5 text-xs sm:text-sm leading-6 sm:leading-7 text-slate-400">
-                                LPE is designed to go beyond traditional
-                                courses. Learn practical skills, build real
-                                projects, showcase your work and connect with
-                                opportunities.
-                            </p>
-
-                            <Link
-                                href="/"
-                                className="mt-5 sm:mt-6 inline-block rounded-xl border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-purple-300 transition hover:bg-purple-500/20"
-                            >
-                                Explore Opportunities →
-                            </Link>
-                        </div>
-
-                        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
-                            <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.06] p-4 sm:p-5">
-                                <div className="text-2xl sm:text-3xl">📚</div>
-
-                                <h3 className="mt-3 sm:mt-4 font-bold text-sm sm:text-base">
-                                    01. Learn
-                                </h3>
-
-                                <p className="mt-1 sm:mt-2 text-xs leading-5 sm:leading-6 text-slate-400">
-                                    Learn high-demand skills through practical
-                                    lessons.
-                                </p>
-                            </div>
-
-                            <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.06] p-4 sm:p-5">
-                                <div className="text-2xl sm:text-3xl">🏆</div>
-
-                                <h3 className="mt-3 sm:mt-4 font-bold text-sm sm:text-base">
-                                    02. Prove
-                                </h3>
-
-                                <p className="mt-1 sm:mt-2 text-xs leading-5 sm:leading-6 text-slate-400">
-                                    Complete projects and prove your real
-                                    abilities.
-                                </p>
-                            </div>
-
-                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 sm:p-5">
-                                <div className="text-2xl sm:text-3xl">💰</div>
-
-                                <h3 className="mt-3 sm:mt-4 font-bold text-sm sm:text-base">
-                                    03. Earn
-                                </h3>
-
-                                <p className="mt-1 sm:mt-2 text-xs leading-5 sm:leading-6 text-slate-400">
-                                    Unlock jobs, clients and income
-                                    opportunities.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Footer */}
-                <footer className="mt-10 sm:mt-14 border-t border-white/[0.06] pt-6 pb-2 text-center">
-                    <p className="text-xs sm:text-sm font-semibold text-slate-300">
-                        LPE — Learn · Prove · Earn
-                    </p>
-
-                    <p className="mt-1 text-[11px] sm:text-xs text-slate-600">
-                        Build skills. Build proof. Build your future.
-                    </p>
-                </footer>
-            </div>
-
-            {/* Mobile Bottom Navigation Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/10 bg-[#070913]/95 px-2 py-2 backdrop-blur-lg md:hidden">
-                <button
-                    type="button"
-                    onClick={() => router.push("/")}
-                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
-                >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
-                    <span className="text-[10px] font-medium">Home</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => router.push("/courses")}
-                    className="flex flex-col items-center gap-0.5 text-purple-400"
-                >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5.5A3.5 3.5 0 0 1 6.5 2H11v17H6.5A3.5 3.5 0 0 0 3 22Z"/><path d="M21 5.5A3.5 3.5 0 0 0 17.5 2H13v17h4.5A3.5 3.5 0 0 1 21 22Z"/></svg>
-                    <span className="text-[10px] font-medium">Courses</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => router.push("/")}
-                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
-                >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
-                    <span className="text-[10px] font-medium">Jobs</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => router.push("/")}
-                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
-                >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16v11H8l-4 4Z"/></svg>
-                    <span className="text-[10px] font-medium">Messages</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => router.push("/dashboard")}
-                    className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white"
-                >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 3.5-6 8-6s7.2 1.8 8 6"/></svg>
-                    <span className="text-[10px] font-medium">Profile</span>
-                </button>
             </div>
         </main>
     );
