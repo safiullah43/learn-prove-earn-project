@@ -37,9 +37,9 @@ const PAYMENT_ACCOUNTS = {
 };
 
 export default function CheckoutPage() {
-  const params = useParams<{ courseId: string }>();
+  const params = useParams();
   const router = useRouter();
-  const courseId = params?.courseId;
+  const courseId = typeof params?.courseId === "string" ? params.courseId : "";
 
   const [course, setCourse] = useState<{ id: string; title: string; price: string } | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<"jazzcash" | "easypaisa" | "bank">("jazzcash");
@@ -66,8 +66,8 @@ export default function CheckoutPage() {
 
         if (data) {
           setCourse({
-            id: data.id,
-            title: data.title,
+            id: String(data.id),
+            title: String(data.title),
             price: data.price ? String(data.price) : "5,000",
           });
         } else if (FALLBACK_COURSES[courseId]) {
@@ -78,7 +78,7 @@ export default function CheckoutPage() {
         } else {
           setCourse(null);
         }
-      } catch (err: unknown) {
+      } catch (err) {
         console.error("Error loading course:", err);
       } finally {
         setLoading(false);
@@ -149,12 +149,9 @@ export default function CheckoutPage() {
       }, { onConflict: "user_id,course_id" });
 
       setSuccess(true);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage("Failed to submit payment request.");
-      }
+    } catch (err) {
+      const errorObj = err as Error;
+      setErrorMessage(errorObj.message || "Failed to submit payment request.");
     } finally {
       setSubmitting(false);
     }
@@ -261,11 +258,11 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {errorMessage ? (
+            {errorMessage !== "" && (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
                 {errorMessage}
               </div>
-            ) : null}
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
