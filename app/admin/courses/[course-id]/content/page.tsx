@@ -220,7 +220,7 @@ export default function CourseContentPage() {
       setError(
         err instanceof Error ? err.message : "Failed to load course content."
       );
-    } fontally {
+    } finally {
       setLoading(false);
     }
   }, [courseId, router]);
