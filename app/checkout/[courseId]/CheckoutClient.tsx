@@ -39,7 +39,7 @@ const PAYMENT_ACCOUNTS = {
 export default function CheckoutClient(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
-  const courseId = typeof params?.courseId === "string" ? params.courseId : "";
+  const courseId: string = typeof params?.courseId === "string" ? params.courseId : "";
 
   const [course, setCourse] = useState<{ id: string; title: string; price: string } | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<"jazzcash" | "easypaisa" | "bank">("jazzcash");
@@ -48,7 +48,7 @@ export default function CheckoutClient(): React.JSX.Element {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function CheckoutClient(): React.JSX.Element {
 
   async function handleSubmitPayment(e: React.FormEvent) {
     e.preventDefault();
-    setErrorMessage("");
+    setErrorMessage(null);
 
     if (!transactionId.trim()) {
       setErrorMessage("Please enter the Transaction ID (TID).");
@@ -151,7 +151,7 @@ export default function CheckoutClient(): React.JSX.Element {
       setSuccess(true);
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setErrorMessage(String(e?.message || "Failed to submit payment request."));
+      setErrorMessage(e?.message ? String(e.message) : "Failed to submit payment request.");
     } finally {
       setSubmitting(false);
     }
@@ -185,6 +185,8 @@ export default function CheckoutClient(): React.JSX.Element {
       </main>
     );
   }
+
+  const displayErrorText: string | null = errorMessage ? String(errorMessage) : null;
 
   return (
     <main className="min-h-screen bg-[#07070a] text-white py-12 px-4 sm:px-6 lg:px-8">
@@ -258,11 +260,11 @@ export default function CheckoutClient(): React.JSX.Element {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {errorMessage ? (
+            {displayErrorText !== null && (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                {String(errorMessage)}
+                {displayErrorText}
               </div>
-            ) : null}
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
