@@ -43,13 +43,13 @@ export default function CheckoutPage() {
 
   const [course, setCourse] = useState<{ id: string; title: string; price: string } | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<"jazzcash" | "easypaisa" | "bank">("jazzcash");
-  const [transactionId, setTransactionId] = useState("");
-  const [senderAccount, setSenderAccount] = useState("");
+  const [transactionId, setTransactionId] = useState<string>("");
+  const [senderAccount, setSenderAccount] = useState<string>("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadCourse() {
@@ -261,7 +261,11 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">{error}</div>}
+            {error ? (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+                {String(error)}
+              </div>
+            ) : null}
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
