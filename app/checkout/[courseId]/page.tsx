@@ -187,8 +187,6 @@ export default function CheckoutPage(): React.JSX.Element {
     );
   }
 
-  const textMessage: string = String(errorMessage || "");
-
   return (
     <main className="min-h-screen bg-[#07070a] text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
@@ -261,9 +259,9 @@ export default function CheckoutPage(): React.JSX.Element {
           </div>
         ) : (
           <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            {textMessage.length > 0 ? (
+            {errorMessage ? (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                <span>{textMessage}</span>
+                {errorMessage}
               </div>
             ) : null}
 
