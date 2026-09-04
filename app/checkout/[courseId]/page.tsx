@@ -78,7 +78,7 @@ export default function CheckoutPage() {
         } else {
           setCourse(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error loading course:", err);
       } finally {
         setLoading(false);
@@ -108,7 +108,6 @@ export default function CheckoutPage() {
 
       let receiptUrl: string | null = null;
 
-      // 1. Upload Screenshot File to Supabase Storage Bucket
       if (screenshotFile) {
         const fileExt = screenshotFile.name.split(".").pop();
         const fileName = `${session.user.id}_${Date.now()}.${fileExt}`;
@@ -129,7 +128,6 @@ export default function CheckoutPage() {
         receiptUrl = publicUrlData.publicUrl;
       }
 
-      // 2. Insert Payment Record
       const { error: payError } = await supabase.from("payments").insert({
         user_id: session.user.id,
         course_id: courseId,
@@ -143,7 +141,6 @@ export default function CheckoutPage() {
 
       if (payError) throw payError;
 
-      // 3. Mark Enrollment Pending
       await supabase.from("enrollments").upsert({
         user_id: session.user.id,
         course_id: courseId,
@@ -152,8 +149,12 @@ export default function CheckoutPage() {
       }, { onConflict: "user_id,course_id" });
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to submit payment request.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to submit payment request.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -201,7 +202,6 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-bold mb-2">Payment Checkout</h1>
         <p className="text-gray-400 mb-8">Send payment to any of the accounts below to gain course access.</p>
 
-        {/* Course Summary */}
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 mb-8 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold">{course.title}</h2>
@@ -212,7 +212,6 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Payment Method Tabs */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           {(["jazzcash", "easypaisa", "bank"] as const).map((method) => (
             <button
@@ -230,7 +229,6 @@ export default function CheckoutPage() {
           ))}
         </div>
 
-        {/* Selected Account Details Box */}
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-6 mb-8 space-y-3">
           <h3 className="text-lg font-bold text-yellow-400">
             {PAYMENT_ACCOUNTS[selectedMethod].title} Details
@@ -247,7 +245,6 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        {/* Submission Form */}
         {success ? (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 text-center space-y-4">
             <div className="text-5xl">🎉</div>
@@ -293,7 +290,6 @@ export default function CheckoutPage() {
               />
             </div>
 
-            {/* SCREENSHOT UPLOAD INPUT */}
             <div className="rounded-xl border border-dashed border-white/20 p-4 text-center bg-black/30">
               <label className="block text-sm font-medium text-yellow-400 mb-2 cursor-pointer">
                 📷 Upload Payment Receipt Screenshot (Optional)
