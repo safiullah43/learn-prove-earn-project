@@ -264,9 +264,9 @@ export default function CheckoutClient(): React.JSX.Element {
                     </div>
                 ) : (
                     <form onSubmit={handleSubmitPayment} className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                        {errorMessage && (
+                        {typeof errorMessage === "string" && errorMessage.length > 0 && (
                             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
-                                {errorMessage}
+                                {String(errorMessage)}
                             </div>
                         )}
 
